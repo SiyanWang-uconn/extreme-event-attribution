@@ -1,0 +1,17 @@
+# R
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+
+# LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# macOS
+.DS_Store
