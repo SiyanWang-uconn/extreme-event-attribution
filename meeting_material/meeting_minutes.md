@@ -1,3 +1,69 @@
+
+# 2026/09/03
+
+**Date: 2026/09/03**  
+**Time: 9AM**  
+
+
+## 1. What We Discussed
+
+### Progress Updates
+
+- Update repo bib
+- Read Naveau2020.
+- Check Min 2011's work wether attribution or not.
+- Understand how to calculate PR(RR) FAR
+
+
+### Research Results / Materials Presented
+
+- 
+
+### Main Discussion Points
+
+- 
+
+### Questions and Concerns
+
+  - Is the "optimal fingerprinting" usually used in long-term trend attribution? For example: the one signal model for ANT is said to be $\mathbf{y}_{\mathrm{obs}} = \beta_{ANT} \mathbf{x_{ANT}} + \varepsilon$ 
+  So that is different with problistic attribution?
+
+  - 
+
+
+## 2. What We Decided
+
+### Decisions
+
+- 
+
+### Advisor’s Feedback and Recommendations
+
+- 
+
+### Changes to the Research Plan or Methods
+
+- 
+
+## 3. What to Do Next
+
+| Action Item | Responsible Person | Deadline | Status |
+|---|---|---|---|
+|  |  |  | Not started |
+|  |  |  | Not started |
+|  |  |  | Not started |
+
+## Next Meeting
+
+**Date:**  
+
+**Topics for the next meeting:**
+
+- 
+- 
+
+
+
 # 2026/08/21
 
 **Date: 2026/08/21**  
@@ -9,7 +75,7 @@
 
 ### Progress Updates
 
-- Read paper *Statistical method for extreme event Attribution in climate Science*
+- Read paper *Statistical method for extreme event Attribution in climate Science* Section 5 *Statistical Method*
 
 ### Research Results / Materials Presented
 
