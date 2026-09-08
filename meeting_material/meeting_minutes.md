@@ -35,23 +35,30 @@
 
 ### Decisions
 
-- 
+- No pdf in git repo, onlt the source file.
+- Use bibtex tool sort reference.bib
+- Understand fingerprinting methods(concept) not only in extreme topics.
+- Find data and get hands on EEA, probabily make it a course project/case study *(Aim for this semester)*.
+- Try to reproduce pepople's work.
+- Next week: Present Naveau's paper.
+
 
 ### Advisor’s Feedback and Recommendations
 
+- For question: Yes, and that is not our aim
 - 
 
 ### Changes to the Research Plan or Methods
 
-- 
+- Write a review paper at the end of semester.
 
 ## 3. What to Do Next
 
 | Action Item | Responsible Person | Deadline | Status |
 |---|---|---|---|
-|  |  |  | Not started |
-|  |  |  | Not started |
-|  |  |  | Not started |
+| Figure out tex environment  | Siyan | ASAP | Done |
+| Review paper | Siyan | This wwek | -ing |
+| Understand fingerprinting | Siyan | This week | Done |
 
 ## Next Meeting
 
