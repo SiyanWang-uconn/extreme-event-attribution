@@ -1,3 +1,63 @@
+# 2026/09/10
+
+**Date: 2026/09/10**  
+**Time: 9AM**  
+
+## 1. What We Discussed
+
+### Progress Updates
+
+- Understood fingerprint-based detection and attribution methods.
+- Read and summarized Naveau et al. (2020) on extreme event attribution.
+- Found the topic (2026 European heat wave) for case study and its relative reports.
+- Prepared slides for the research meeting.
+
+### Research Results / Materials Presented
+
+- 0910slides
+
+### Main Discussion Points
+
+- 
+
+### Questions and Concerns
+
+- Did the 2026 WWA report use non-parameter counting on counterfactual world?
+
+## 2. What We Decided
+
+### Decisions
+
+- Keep going on the reproduction of WWA 2026 EU heatwave report (**Primary**).
+- Read Yan's 2023 fingerprinting paper, understand fingerprinting. When applicable, 
+read JASA paper on combination of fingerprinting & EVT
+- Read Hannart et. al work at 2016 about counterfactual causality (Digest definition of PN/PNS/PS).
+
+
+### Advisor’s Feedback and Recommendations
+
+- Be familiar with the Journal rank, so choose the influence paper.
+- Remember people's name when referring their work.
+- Be careful of notation, be consistent.
+- Understand the calculation of nan-parameter event counting in counterfactual world.
+
+
+### Changes to the Research Plan or Methods
+
+- Probably we can step into the bivariate  Extreme Value Theory in the future.
+
+
+
+## 3. What to Do Next
+
+| Action Item | Responsible Person | Deadline | Status |
+|---|---|---|---|
+| Reproduce WWA 2026 EU heatwave report  | Siyan | This week | -ing |
+|  Read Yan's 2023 fingerprinting paper | Siyan |  | Not started |
+|  Read Hannart et. al 2016| Siyan |  | Not started |
+
+
+
 
 # 2026/09/03
 
