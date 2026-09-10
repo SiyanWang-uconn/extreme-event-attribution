@@ -1,0 +1,610 @@
+\documentclass[aspectratio=169]{beamer}
+
+\usetheme{Madrid}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+\setbeamertemplate{section page}{
+  \centering
+  \vfill
+  {\usebeamerfont{section title}\insertsection\par}
+  \vfill
+}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath, amssymb, bm}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\title[Research Meeting]{September 11, 2026 Research Meeting}
+\subtitle{}
+\author{Siyan Wang}
+\date{}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{What I did this week}
+  \begin{itemize}
+    \item Understood fingerprint-based detection and attribution methods.
+    \item Read and summarized Naveau et al. (2020) on extreme event attribution.
+    \item Found the topic (2026 European heat wave) for case study and its relative reports.
+    \item Prepared slides for the research meeting.
+  \end{itemize}
+  
+\end{frame}
+
+
+\section{Fingerprinting}
+
+\begin{frame}[plain]
+  \sectionpage
+\end{frame}
+
+\begin{frame}{What Is Fingerprinting?}
+\small
+\begin{itemize}
+  \item In general, a fingerprint is a distinctive pattern used to identify or attribute a source.
+  \item In climate science, a fingerprint is the expected response pattern to a specific forcing.
+  \item Examples of forcings:
+  \[
+    GHG,\quad aerosols,\quad natural\ forcing,\quad ALL.
+  \]
+  \item The attribution question is whether the observed climate record contains this expected pattern.
+  \item Fingerprinting is usually used for long-term detection and attribution.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Fingerprinting as a Signal-plus-Noise Problem}
+\small
+A simplified detection and attribution model is:
+\[
+  \mathbf{y}
+  =
+  \sum_{k=1}^{K} \beta_k \mathbf{x}_k
+  +
+  \boldsymbol{\epsilon}.
+\]
+
+\begin{itemize}
+  \item $\mathbf{y}$: observed climate change pattern.
+  \item $\mathbf{x}_k$: model-simulated fingerprint for forcing $k$.
+  \item $\beta_k$: scaling factor.
+  \item $\boldsymbol{\epsilon}$: internal climate variability and residual error.
+\end{itemize}
+
+\[
+  \beta_k > 0
+  \quad \Rightarrow \quad
+  \text{signal detected.}
+\]
+\end{frame}
+
+\begin{frame}{Optimal Fingerprinting}
+\small
+Optimal fingerprinting estimates the scaling factors while accounting for the covariance of internal variability.
+
+\[
+  \mathbf{y}
+  =
+  \mathbf{X}\boldsymbol{\beta}
+  +
+  \boldsymbol{\epsilon},
+  \qquad
+  \boldsymbol{\epsilon}\sim N(\mathbf{0},\mathbf{C}).
+\]
+
+The generalized least squares estimator is:
+\[
+  \hat{\boldsymbol{\beta}}
+  =
+  (\mathbf{X}^{T}\mathbf{C}^{-1}\mathbf{X})^{-1}
+  \mathbf{X}^{T}\mathbf{C}^{-1}\mathbf{y}.
+\]
+
+\begin{itemize}
+  \item $\mathbf{C}$ is estimated from control runs or internal-variability simulations.
+  \item $\mathbf{C}^{-1}$ weights directions with lower noise more strongly.
+  \item This improves signal-to-noise separation.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Use in Nested-Model Comparison}
+\small
+Fingerprinting can be framed as comparing nested regression models.
+
+\[
+  H_0: \mathbf{y} = \mathbf{X}_{-k}\boldsymbol{\beta}_{-k} + \boldsymbol{\epsilon}
+\]
+
+\[
+  H_1: \mathbf{y} = \mathbf{X}_{-k}\boldsymbol{\beta}_{-k}
+  + \beta_k \mathbf{x}_k + \boldsymbol{\epsilon}
+\]
+
+\begin{itemize}
+  \item $H_0$: the forcing-$k$ fingerprint is excluded.
+  \item $H_1$: the forcing-$k$ fingerprint is included.
+  \item If adding $\mathbf{x}_k$ significantly improves the fit, the signal is detected.
+  \item This is usually tested through confidence intervals for $\beta_k$ or likelihood / residual-sum-of-squares comparisons.
+\end{itemize}
+
+\[
+  \beta_k = 0
+  \quad \text{vs.} \quad
+  \beta_k \ne 0
+\]
+\end{frame}
+
+\section{Statistical Methods for Extreme Event Attribution in Climate Science}
+
+\begin{frame}[plain]
+  \sectionpage
+  \vspace{-1.2cm}
+  \begin{center}
+    {\large Naveau, Hannart, and Ribes (2020)\par}
+    \vspace{0.25cm}
+    {\small Annual Review of Statistics and Its Application, 7:89--110\par}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Why This Paper Matters}
+  \begin{itemize}
+    \item Extreme event attribution (EEA) asks whether human influence changed the likelihood or intensity of a class of extreme events.
+    \item The paper is a topic review: it maps the statistical workflow, assumptions, and open problems.
+    \item Its key message: EEA is not just a climate-model exercise; it is a probability, uncertainty, tail-risk, and causal-inference problem.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{The EEA Question}
+  \begin{block}{Common public question}
+    Did climate change cause this heat wave, flood, drought, or record event?
+  \end{block}
+
+  \begin{block}{Statistical EEA question}
+    Did anthropogenic forcing change the probability of this \emph{class of events}?
+  \end{block}
+
+  \vspace{0.2cm}
+  \begin{itemize}
+    \item EEA therefore defines a repeatable event class: variable, region, time window, and threshold.
+    \item The final attribution statement is conditional on this definition.
+  \end{itemize}
+\end{frame}
+
+\section{Section 1: Introduction}
+
+\begin{frame}{Section 1: Starting Point}
+  \begin{itemize}
+    \item EEA compares extreme-event likelihoods under different scenarios.
+    \item The two central worlds are:
+      \begin{itemize}
+        \item factual world: close to the observed climate, including anthropogenic forcing;
+        \item counterfactual world: a hypothetical climate without anthropogenic emissions.
+      \end{itemize}
+    \item The paper focuses on statistical methods rather than the storyline approach.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Workflow Lesson from Section 1}
+  \begin{enumerate}
+    \item Start from a real impact or observed extreme.
+    \item Translate it into a statistical event class.
+    \item Define factual and counterfactual climates.
+    \item Estimate and compare event probabilities.
+  \end{enumerate}
+
+  \vspace{0.25cm}
+  \begin{alertblock}{Practical warning}
+    The event definition is not a technical afterthought. It determines what question the attribution result actually answers.
+  \end{alertblock}
+\end{frame}
+
+\section{Section 2: Basic Setups}
+
+\begin{frame}{Section 2: Probability Setup}
+  Let $u$ be a high threshold and let the event be an exceedance.
+
+  \begin{align*}
+    p_1(u) &= P(Z > u) && \text{factual world}, \\
+    p_0(u) &= P(X > u) && \text{counterfactual world}.
+  \end{align*}
+
+  \begin{itemize}
+    \item $Z$ and $X$ represent the same climate quantity in two different worlds.
+    \item Example: regional  3-day Annual/June maximum temperature mean (Tx3x) in 
+    current climate verse a simulation without anthropogenic or previous year's forcing (GMST).
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Risk Ratio and FAR}
+  Two common attribution quantities are:
+
+  \begin{align*}
+    RR(u) &= \frac{p_1(u)}{p_0(u)}, \\
+    FAR(u) &= 1 - \frac{p_0(u)}{p_1(u)}.
+  \end{align*}
+
+  \begin{itemize}
+    \item $RR=2$: the event is twice as likely in the factual world.
+    \item $FAR=0.5$: half of the event probability is attributable to the forcing, under the assumed framework.
+    \item Both depend on the threshold $u$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{How RR Is Computed in Practice}
+  \begin{enumerate}
+    \item Define $X$ and $u$: for example, June regional Tx3x exceeding the observed event value.
+    \item Obtain samples from factual and counterfactual worlds.
+    \item Estimate exceedance probabilities:
+      \[
+        \hat p_1 = \frac{\#\{Z_i > u\}}{n_1}, \qquad
+        \hat p_0 = \frac{\#\{X_i > u\}}{n_0}.
+      \]
+    \item Compute:
+      \[
+        \widehat{RR} = \frac{\hat p_1}{\hat p_0}.
+      \]
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Why Section 2 Is Not Just a Formula}
+  \begin{itemize}
+    \item If $p_0$ is very small, simple counting can give zero exceedances.
+    \item Then $RR$ becomes unstable or effectively unbounded.
+    \item Return periods are harder in a nonstationary climate: a ``100-year event'' depends on the climate state.
+    \item This motivates later sections on data design, event definition, and extreme value theory.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Figure 2: Causality Depends on Threshold}
+
+\begin{columns}[T,onlytextwidth]
+
+  % Left: text
+  \begin{column}{0.57\textwidth}
+    \small
+    \begin{align*}
+      FAR(u) &= 1-\frac{p_0(u)}{p_1(u)}, \\
+      PS(u) &= \max\left\{1-\frac{1-p_1(u)}{1-p_0(u)},0\right\}, \\
+      PNS(u) &= \max\{p_1(u)-p_0(u),0\}.
+    \end{align*}
+
+    \begin{itemize}
+      
+      \item As $u$ increases, estimating $p_0$ and $RR$ becomes harder
+      because counterfactual exceedances become very rare.
+
+      \item FAR/ $PN$  often increases: if the event occurs, human
+      influence is more likely to have been necessary.
+
+      \item $PS$ often decreases: human influence alone is less likely
+      to be sufficient for a very extreme event.
+
+      \item $PNS$ is often largest at an intermediate threshold, where
+      $p_1(u)-p_0(u)$ is largest.
+    \end{itemize}
+  \end{column}
+
+  % Right: image
+  \begin{column}{0.40\textwidth}
+    \centering
+    \includegraphics[
+      width=\linewidth,
+      height=0.72\textheight,
+      keepaspectratio
+    ]{image/naveau_fig2.png}
+
+    \vspace{0.1cm}
+    {\scriptsize Figure 2: Causal probabilities as functions of threshold $u$.}
+    
+    {\scriptsize Figure 2 shows how these causal probabilities change as
+      the threshold $u$ changes.}
+  \end{column}
+
+\end{columns}
+
+\end{frame}
+
+\section{Section 3: Data and Uncertainty}
+
+\begin{frame}{Section 3: Sources of Uncertainty}
+  Naveau et al. emphasize that factual, counterfactual, and observed climate data are all uncertain.
+
+  \begin{itemize}
+    \item natural internal variability;
+    \item numerical model uncertainty;
+    \item observational uncertainty;
+    \item sampling uncertainty in space and time;
+    \item statistical model uncertainty.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Data Types in EEA}
+  \begin{tabular}{p{0.35\linewidth}p{0.55\linewidth}}
+    \toprule
+    Data source & Main role and limitation \\
+    \midrule
+    Conditional simulations & Large samples for one event, but depend on boundary-condition choices. \\
+    CMIP transient simulations & Multi-model and broadly available, but smaller ensembles and coarser resolution. \\
+    Observations/reanalysis & Anchors the event in reality, but records are short for extremes. \\
+    \bottomrule
+  \end{tabular}
+\end{frame}
+
+\begin{frame}{Workflow Lesson from Section 3}
+  Before estimating $RR$, ask:
+  \begin{itemize}
+    \item Which data represent the factual world?
+    \item Which data represent the counterfactual world?
+    \item Is the ensemble large enough for the event rarity?
+    \item Does the model reproduce the relevant variable, region, and dependence structure?
+    \item Which uncertainties are propagated into the final interval?
+  \end{itemize}
+\end{frame}
+
+\section{Section 4: Event Definitions}
+
+\begin{frame}{Section 4: Defining the Event}
+  An event definition maps a spatio-temporal field into a probability statement.
+
+  \[
+    Y(t,s) \quad \longrightarrow \quad X = g\{Y(t,s)\} \quad \longrightarrow \quad \{X > u\}.
+  \]
+
+  \begin{itemize}
+    \item $Y(t,s)$: original climate field.
+    \item $X$: summary of the event, such as regional mean heat or maximum rainfall.
+    \item $u$: threshold, often the observed event magnitude or a return-level threshold.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{The Event Definition Trade-Off}
+  \begin{itemize}
+    \item Too narrow: physically close to the impact, but low statistical power.
+    \item Too broad: easier to estimate, but may lose the event people care about.
+    \item Record events are different from fixed-threshold exceedances.
+    \item Compound events require multivariate definitions.
+  \end{itemize}
+
+  \vspace{0.2cm}
+  \begin{alertblock}{Practical warning}
+    The event definition should be physically meaningful and statistically estimable.
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}{Advanced Event Definition Ideas}
+  \small
+  The paper discusses methods that make event definition part of the statistical problem.
+
+  \begin{block}{Cattiaux and Ribes: most exceptional domain}
+    Instead of fixing the region and duration in advance, search over candidate
+    regions $R$ and durations $D$ to find where the observed event is most
+    exceptional. \\
+    
+    Example: for a heat wave, compare 3-day, 10-day, monthly, or
+    seasonal definitions over different spatial domains.
+  \end{block}
+
+  \begin{block}{Hannart and Naveau: most causal projection}
+    Treat the event as a multivariate field and find a projection, that carries strong counterfactual causal information, for
+    example by optimizing a quantity related to $PNS$.
+  \end{block}
+
+  \vspace{-0.05cm}
+  \begin{itemize}
+    \item Benefit: the event definition is more targeted to attribution.
+    \item Cost: one must choose the search space, optimization criterion,
+    projection form, and how to correct for selection bias.
+  \end{itemize}
+\end{frame}
+
+\section{Section 5: Statistical Inference}
+
+\begin{frame}{Section 5: The Statistical Task}
+  Once the event is defined, the core task is to estimate two rare-event probabilities:
+  \[
+    p_1(u)=P(Z>u), \qquad p_0(u)=P(X>u).
+  \]
+
+  \vspace{0.15cm}
+  \begin{itemize}
+    \item $Z$: the event variable in the factual world.
+    \item $X$: the same event variable in the counterfactual world.
+    \item $u$: the event threshold, often the observed event magnitude.
+  \end{itemize}
+
+  \vspace{0.15cm}
+  The paper reviews four directions: counting, EVT, hierarchical modeling, and multivariate extremes.
+\end{frame}
+
+\begin{frame}{Nonparametric Counting: The Simple Estimator}
+  Suppose we have factual samples $Z_1,\ldots,Z_n$ and counterfactual samples
+  $X_1,\ldots,X_n$.
+
+  \[
+    \hat p_1(u)=\frac{1}{n}\sum_{i=1}^n I(Z_i>u),
+    \qquad
+    \hat p_0(u)=\frac{1}{n}\sum_{i=1}^n I(X_i>u).
+  \]
+
+  \[
+    \widehat{RR}(u)=\frac{\hat p_1(u)}{\hat p_0(u)}, \qquad
+    \widehat{FAR}(u)=1-\frac{\hat p_0(u)}{\hat p_1(u)}.
+  \]
+
+  \begin{itemize}
+    \item Strength: transparent and distribution-free.
+    \item Requirement: the ensemble must be much larger than the return period of interest.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Why Counting Can Fail}
+  Naveau et al. show that the uncertainty of the counting estimator grows quickly in the tail.
+
+  \[
+    \sqrt{n}\{\widehat{FAR}(u)-FAR(u)\}
+    \approx N\{0,\sigma^2(u)\}.
+  \]
+
+  \[
+    \sigma^2(u)
+    =
+    \frac{p_0^2(u)}{p_1^2(u)}
+    \left[
+      \frac{1-p_0(u)}{p_0(u)}
+      +
+      \frac{1-p_1(u)}{p_1(u)}
+    \right].
+  \]
+
+  \begin{itemize}
+    \item If $p_0(u)$ is tiny, counterfactual exceedances may be zero.
+    \item Then $RR$ becomes unstable, even if the causal signal is strong.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{EVT: Modeling the Tail}
+  EVT replaces raw counting with a tail model.
+
+  \begin{block}{Block maxima}
+    If $X$ is a block maximum, such as annual maximum daily temperature,
+    use the generalized extreme value distribution:
+    \[
+      X \sim GEV(\mu,\sigma,\xi).
+    \]
+  \end{block}
+
+  \begin{block}{Threshold exceedances}
+    If we model exceedances above a high cutoff $v$, use a generalized Pareto tail:
+    \[
+      P(X>x \mid X>v) \approx H_{\xi}\left(\frac{x-v}{\sigma}\right),
+      \qquad x>v.
+    \]
+  \end{block}
+
+  Parameters are commonly estimated by maximum likelihood.
+\end{frame}
+
+\begin{frame}{Computing RR with a GEV Model}
+  For a heat wave index, define a yearly extreme:
+  \[
+    Y_t = \text{annual or seasonal maximum 3-day mean temperature}.
+  \]
+
+  A common EEA model is nonstationary:
+  \[
+    Y_t \sim GEV(\mu_t,\sigma,\xi),
+    \qquad
+    \mu_t=\mu_0+\alpha \, GMST_t.
+  \]
+
+  For event threshold $u$:
+  \[
+    p_1 = 1-F_{GEV}(u;\mu_{\text{factual}},\sigma,\xi),
+  \]
+  \[
+    p_0 = 1-F_{GEV}(u;\mu_{\text{counterfactual}},\sigma,\xi),
+    \qquad
+    RR=\frac{p_1}{p_0}.
+  \]
+\end{frame}
+
+\begin{frame}{From Estimated Parameters to RR}
+  \small
+  After fitting the GEV, plug in two climate states:
+
+  \[
+    \hat\mu_1=\hat\mu_0+\hat\alpha\,GMST_{\text{factual}},
+    \qquad
+    \hat\mu_{cf}=\hat\mu_0+\hat\alpha\,GMST_{\text{counterfactual}}.
+  \]
+
+  Then compute fitted tail probabilities:
+  \[
+    \hat p_1
+    =
+    1-F_{GEV}(u;\hat\mu_1,\hat\sigma,\hat\xi),
+    \qquad
+    \hat p_0
+    =
+    1-F_{GEV}(u;\hat\mu_{cf},\hat\sigma,\hat\xi).
+  \]
+
+  \[
+    \widehat{RR}=\frac{\hat p_1}{\hat p_0}.
+  \]
+
+  Uncertainty is usually obtained by bootstrap, profile likelihood, Bayesian posterior sampling, or delta-method approximations.
+\end{frame}
+
+\begin{frame}{EVT: Benefit and Cost}
+  \begin{itemize}
+    \item Benefit: EVT can estimate probabilities beyond the observed or simulated sample range.
+    \item This is crucial when the counterfactual event probability $p_0$ is extremely small.
+    \item Cost: the result depends on tail assumptions: GEV/GPD choice, threshold choice, stationarity, and tail shape $\xi$.
+    \item In EEA, model misspecification in the tail can strongly distort $RR$ and FAR.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Hierarchical and Multivariate Extensions}
+  The paper argues that richer models are needed when one data set and one tail model are too narrow.
+
+  \begin{itemize}
+    \item Hierarchical models can combine observations, climate models, internal variability, and model uncertainty.
+    \item Multivariate EVT is needed for compound events, such as heat plus drought or rainfall plus saturated soil.
+    \item Tail dependence matters: wrong assumptions about dependence can seriously misestimate joint risk.
+    \item These directions are promising, but still underdeveloped in routine EEA.
+  \end{itemize}
+\end{frame}
+
+\section{Section 6: Conclusions and Open Problems}
+
+\begin{frame}{Section 6: Main Challenges}
+  Naveau et al. identify several statistical challenges:
+
+  \begin{itemize}
+    \item combine all known sources of uncertainty;
+    \item define relevant spatial and temporal event scales;
+    \item estimate extremely small probabilities;
+    \item handle compound and concomitant extremes;
+    \item address model misspecification and spatial multiple testing;
+    \item connect statistical attribution with physical causal storylines.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{A Practical EEA Workflow}
+  \begin{enumerate}
+    \item State the attribution question.
+    \item Define factual and counterfactual worlds.
+    \item Define the event: variable, region, duration, threshold.
+    \item Choose data: observations, reanalysis, CMIP, or conditional ensembles.
+    \item Identify uncertainty sources.
+    \item Estimate $p_1$ and $p_0$.
+    \item Compute $RR$, FAR, or causality-related quantities.
+    \item Quantify uncertainty.
+    \item Interpret as probability change, not deterministic causation.
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Key Takeaways}
+  \begin{itemize}
+    \item EEA is a comparison of factual and counterfactual event probabilities.
+    \item The hard part is not the ratio itself, but credible estimation of $p_1$ and $p_0$.
+    \item Event definition controls the scientific meaning of the result.
+    \item Rare events require careful tail modeling and uncertainty quantification.
+    \item Future EEA needs stronger integration of climate modeling, EVT, hierarchical statistics, and causal inference.
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}{Reference}
+  \small
+  Naveau, P., Hannart, A., and Ribes, A. (2020). Statistical Methods for Extreme Event Attribution in Climate Science. \emph{Annual Review of Statistics and Its Application}, 7, 89--110.
+\end{frame}
+
+\end{document}
