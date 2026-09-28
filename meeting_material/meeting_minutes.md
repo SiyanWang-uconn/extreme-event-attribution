@@ -1,3 +1,56 @@
+# Meeting Minutes
+
+**Date: 09/24/2026**  
+**Time: 9AM**  
+
+
+## 1. What We Discussed
+
+### Progress Updates
+
+- Reproduce WWA EU 2026 heatwave report
+
+### Research Results / Materials Presented
+
+- 
+
+### Main Discussion Points
+
+- What is the fig 7 ploting.
+- What is the raw data looks like.
+- Is the GMST by year?
+
+### Questions and Concerns
+
+- 
+
+## 2. What We Decided
+
+### Decisions
+
+- Write a tutorial paper on 2026 EU heatwave. Apply Naveau's methods
+
+### Advisor’s Feedback and Recommendations
+
+- Put slides to meeting material folder.
+- Understand fingerprinting: 1. ma2023optimal for process and concept 2. lau2023extreme for the combination of it and EVT. 3. li2026adaptable for methodology on fingerprinting
+- Read fingerprinting paper and ready to present.
+- Understand code and reproduce, including the plot
+
+### Changes to the Research Plan or Methods
+
+- Target a tutorial paper.
+
+## 3. What to Do Next
+
+| Action Item | Responsible Person | Deadline | Status |
+|---|---|---|---|
+| Reproduce code  | Siyan  | This week | Not started |
+| Read paper | Siyan |  | Not started |
+| Write manuscript | Siyan |  | Not started |
+
+
+
 # 2026/09/10
 
 **Date: 2026/09/10**  
