@@ -1,0 +1,395 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,amsmath,booktabs,graphicx}
+\definecolor{ink}{HTML}{183248}
+\definecolor{teal}{HTML}{187B84}
+\definecolor{rust}{HTML}{CB593C}
+\setbeamercolor{normal text}{fg=ink,bg=white}
+\setbeamercolor{frametitle}{fg=ink}
+\setbeamercolor{structure}{fg=teal}
+\setbeamercolor{alerted text}{fg=rust}
+\setbeamerfont{frametitle}{size=\Large,series=\bfseries}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{\hfill\scriptsize Siyan Wang\enspace|\enspace Preliminary reproduction\enspace|\enspace\insertframenumber/\inserttotalframenumber\hspace{5mm}\vspace{3mm}}
+\setbeamersize{text margin left=7mm,text margin right=7mm}
+\newcommand{\src}[1]{\par\vspace{1mm}{\fontsize{6.5}{8}\selectfont\color{gray}#1\par}}
+\title{9/24 research meeting}
+\author{Siyan Wang}
+\date{23 September 2026}
+\begin{document}
+
+\begin{frame}[plain,noframenumbering]
+  \titlepage
+\end{frame}
+
+
+\section{European heatwave attribution: reproduction results}
+
+\begin{frame}[plain,noframenumbering]
+    \sectionpage
+\end{frame}
+% ==============================================================================
+% Slide 01 — Data sources and dataset characteristics
+% Purpose: classify the four products, retain their temporal coverage, and
+% summarize the main strength and limitation of each dataset.
+% ==============================================================================
+\begin{frame}{Four temperature products: type, coverage and characteristics}
+\footnotesize
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{p{1.25cm}p{3.35cm}p{2.35cm}p{6.15cm}}\toprule
+Product & Type of data & Temporal coverage & Main characteristics\\\midrule
+ERA5 & Reanalysis: observations assimilated into a numerical weather model & 1950--2025 & Continuous and physically consistent; model-dependent.\\
+E-OBS & Gridded station observations over European land (spatial interpolation) & 1920--2025 & High European resolution with uncertainty estimates; coverage varies by country and period.\\
+CPC & Gridded station-based daily temperature analysis (GTS observations) & 1979--2025 & Frequently updated, but has the shortest record.\\
+Berkeley & Observation-based gridded daily land temperature reconstruction & 1897--2023 annual; 1897--2024 June & Longest record with breakpoint correction; daily data are experimental.\\\bottomrule
+\end{tabular}
+\medskip
+\scriptsize All four products are gridded. ERA5 is constrained by a numerical model and data assimilation; the other three are constructed primarily from station observations. Agreement across products therefore tests robustness to different data and processing choices.
+\src{Sources: report Appendix A1.1 (p.23); NOAA CPC, E-OBS, ERA5 and Berkeley Earth product documentation; saved fit-year records. Temporal coverage refers to the periods used in our reproduction.}
+\end{frame}
+
+
+
+% ==============================================================================
+% Slide 02 — GMST preprocessing
+% Purpose: distinguish the report's smoothing convention from our provisional
+% endpoint extrapolation. The GEV model is defined on Slide 03.
+% ==============================================================================
+\begin{frame}{GMST preprocessing and the 2026 endpoint}
+\begin{columns}[T,onlytextwidth]
+\column{.51\textwidth}\small
+\textbf{Four-year smoothed GMST}\par\smallskip
+\footnotesize NASA GISTEMP global land--ocean anomalies (1951--1980 baseline):
+\[
+g_y=\frac1{12}\sum_{m=1}^{12}g_{y,m},\qquad
+G_t=\frac14\sum_{k=-2}^{1}g_{t+k}.
+\]
+The four-year mean is assigned to year 3 of the window. Thus
+\[
+G_{2026}=\operatorname{mean}(g_{2024},g_{2025},g_{2026},g_{2027}).
+\]
+\column{.45\textwidth}\small
+\textbf{Our provisional endpoint}\par\smallskip
+\footnotesize
+\begin{tabular}{rrrr}\toprule
+2024 & 2025 & 2026* & 2027*\\\midrule
+1.28583 & 1.19333 & 1.22714 & 1.26606\\\bottomrule
+\end{tabular}
+\par\medskip
+\[
+\widehat G_{2026}=1.24309^\circ\mathrm C.
+\]
+* 2026--2027 are extrapolated by OLS over 2011--2025. The report specifies the window, but not how its endpoint values were obtained.
+\end{columns}
+\medskip\small
+The counterfactual world they chose is 1976  (50 years ago, and the year of one of the
+most significant heatwaves in the UK in terms of persistently high temperatures), and 2003, when the
+first major European heatwave of the century occurred. The climate is $0.6$ and $1.1^\circ$C cooler than now.
+
+\src{Sources: report Appendix A1.1 and Section 1.3; run\_cpc.R; saved GMST endpoint assumptions. Values are anomalies in $^\circ$C and are rounded.}
+\end{frame}
+
+
+% ==============================================================================
+% Slide 03 — Statistical model and attribution quantities
+% Purpose: define event construction, the GEV model, RR, and intensity change.
+% ==============================================================================
+\begin{frame}{A location-shift GEV links extremes to GMST}
+\begin{columns}[T,onlytextwidth]
+\column{.49\textwidth}
+\textbf{Event construction}\par\medskip
+\small $40$--$60^\circ$N, $10.5^\circ$W--$20^\circ$E.\\[2mm]
+Cosine-latitude weighted regional mean; then three-day means and June / annual maxima.\\[2mm]
+Historical fitting excludes 2026; complete periods require at least 95\% valid daily values.
+\medskip
+\begin{tabular}{lrr}\toprule
+Current return period & Tx3x & Tn3x\\\midrule
+Annual & 25 yr & 20 yr\\
+June & 100 yr & 100 yr\\\bottomrule
+\end{tabular}
+\medskip\par
+\scriptsize\textbf{Model choice in the report.} Appendix A1.2 also tests an ENSO/NAO covariate. Table 3 finds no AIC improvement over GMST alone, so these indices are ``not considered for the remainder of this study.'' Our retained results therefore use GMST only.
+\column{.47\textwidth}
+\textbf{Nonstationary GEV}\par
+\footnotesize Each annual extreme $X_t$ is paired with its smoothed GMST $G_t$; one model is fitted across all years.
+\[
+X_t\sim\mathrm{GEV}(\mu_t,\sigma,\xi),\quad
+\mu_t=\mu_0+\alpha G_t.
+\]
+\scriptsize $\alpha$: location change per $1^\circ$C GMST; $\sigma,\xi$: constant scale and shape. The candidate extension is $\mu_t=\mu_0+\alpha G_t+\beta I_t$, where $I_t$ is detrended Ni\~no3.4 or NAO and $\beta$ is its location effect.\par\smallskip
+\textbf{Attribution quantities}\par
+$G_F$: 2026 GMST; $G_C=G_F-\Delta G$, where $\Delta G=0.6$ or $1.1^\circ$C. $F_F,F_C$: fitted GEV CDFs; $T$: return period.
+\[
+x_F=F_F^{-1}(1-1/T),\qquad
+RR=\frac{1/T}{1-F_C(x_F)}.
+\]
+\[
+\Delta I=F_F^{-1}(1-1/T)-F_C^{-1}(1-1/T)
+=\alpha\Delta G.
+\]
+\end{columns}
+\src{Source: report Appendix A1.2 and Section 2.1.1 (Table 3); saved run scripts and gev.R.}
+\end{frame}
+
+
+% ==============================================================================
+% Slide 04 — Figure 7 comparison for ERA5
+% Purpose: compare the report panel directly with our ERA5 reproduction.
+% ==============================================================================
+\begin{frame}{Figure 7 comparison: ERA5 annual Tx3x}
+\begin{columns}[T,onlytextwidth]
+\column{.47\textwidth}\centering\small\textbf{Report: Figure 7a}\par
+\includegraphics[height=4.3cm,trim=104 575 303 72,clip]{0923_reproduction_assets/report_page12.pdf}
+\column{.49\textwidth}\centering\small\textbf{Our reproduction: ERA5}\par
+\includegraphics[width=\linewidth,height=4.3cm,keepaspectratio,trim=0 263 341 25,clip]{0923_reproduction_assets/figure7.pdf}
+\end{columns}
+\medskip\small
+Both fits show a strong upward shift from the 1976-like climate to the current climate. Our fitted current 25-year level is $30.90^\circ$C; its past return period is about $1.01\times10^6$ years.
+\src{Report p.12, Fig.7a; saved ERA5 Figure 7 reconstruction. Our input is daily ERA5 Tmax from KNMI Climate Explorer; the fit uses 1950--2025 and 300 parameter-bootstrap replicates for the plotted bands.}
+\end{frame}
+
+
+% ==============================================================================
+% Slide 05 — Figure 7 comparison for CPC
+% Purpose: compare the report panel directly with our CPC reproduction.
+% ==============================================================================
+\begin{frame}{Figure 7 comparison: CPC annual Tx3x}
+\begin{columns}[T,onlytextwidth]
+\column{.47\textwidth}\centering\small\textbf{Report: Figure 7b}\par
+\includegraphics[height=4.3cm,trim=298 575 107 72,clip]{0923_reproduction_assets/report_page12.pdf}
+\column{.49\textwidth}\centering\small\textbf{Our reproduction: CPC}\par
+\includegraphics[width=\linewidth,height=4.3cm,keepaspectratio,trim=346 263 0 25,clip]{0923_reproduction_assets/figure7.pdf}
+\end{columns}
+\medskip\small
+Both show an upward shift from 1976-like (blue) to current climate (red). Our fitted current 25-year level is $33.18^\circ$C; its past return period is 229 years.
+
+\src{Report p.12, Fig.7b (original crop); saved Figure 7 reconstruction. Purple line: current 25-year threshold. Our bands: 300 parameter-bootstrap replicates; adjusted observations shown as points.}
+\end{frame}
+
+
+
+% ==============================================================================
+% Slide 06 — Figure 7 comparison for Berkeley
+% Purpose: compare the report panel directly with our Berkeley reproduction.
+% ==============================================================================
+\begin{frame}{Figure 7 comparison: Berkeley annual Tx3x}
+\begin{columns}[T,onlytextwidth]
+\column{.47\textwidth}\centering\small\textbf{Report}\par
+\includegraphics[height=4.3cm,trim=104 390 291 264,clip]{0923_reproduction_assets/report_page12.pdf}
+\column{.49\textwidth}\centering\small\textbf{Our reproduction}\par
+\includegraphics[width=\linewidth,height=4.3cm,keepaspectratio,trim=0 0 341 277,clip]{0923_reproduction_assets/figure7.pdf}
+\end{columns}
+\medskip\small Our current 25-year threshold is $31.92^\circ$C; the fitted 1976-like return period is 4,876 years. Both plots show warming, but their threshold levels and tails differ.
+\medskip\par\footnotesize 
+\src{Sources: report p.12, Figure 7; saved Figure 7 reconstruction and summary. Original axes retained; panel scales differ. Our confidence bands use 300 parameter-bootstrap replicates.}
+\end{frame}
+
+
+
+% ==============================================================================
+% Slide 07 — Figure 7 comparison for E-OBS
+% Purpose: compare the report panel directly with our E-OBS reproduction.
+% ==============================================================================
+\begin{frame}{Figure 7 comparison: E-OBS annual Tx3x}
+\begin{columns}[T,onlytextwidth]
+\column{.47\textwidth}\centering\small\textbf{Report}\par
+\includegraphics[height=4.3cm,trim=298 390 107 264,clip]{0923_reproduction_assets/report_page12.pdf}
+\column{.49\textwidth}\centering\small\textbf{Our reproduction}\par
+\includegraphics[width=\linewidth,height=4.3cm,keepaspectratio,trim=346 0 0 277,clip]{0923_reproduction_assets/figure7.pdf}
+\end{columns}
+\medskip\small Our current 25-year threshold is $32.05^\circ$C; the fitted 1976-like return period is 52,044 years. Both plots show warming, but their threshold levels and tails differ.
+\medskip\par\footnotesize The report uses v32.0e; our input uses v33e.
+\src{Sources: report p.12, Figure 7; saved Figure 7 reconstruction and summary. Original axes retained; panel scales differ. Our confidence bands use 300 parameter-bootstrap replicates.}
+\end{frame}
+
+
+
+% ==============================================================================
+% Slide 08 — Original Table 2 benchmark
+% Purpose: show the synthesized numerical target before our comparisons.
+% ==============================================================================
+\begin{frame}{Table 2: the report's numerical target}
+\centering
+\includegraphics[width=13.4cm,height=4.7cm,keepaspectratio,trim=44 92 59 528,clip]{0923_reproduction_assets/report_page12.pdf}
+\par\medskip\raggedright
+\small The report synthesizes results across observational and reanalysis datasets. Our current outputs are \textbf{individual-dataset estimates}; the synthesis is still pending.
+\medskip\par\footnotesize Parentheses contain reported 95\% intervals. ``$>1$m'' means $>10^6$. Annual return periods: 25 yr for Tx3x, 20 yr for Tn3x; June: 100 yr for both.
+\src{Original Table 2, report p.12; caption and synthesis description on p.13. The next slides use this table as a benchmark, not as an individual-dataset ground truth.}
+\end{frame}
+
+
+
+% ==============================================================================
+% Slide 09 — Table 2 intensity comparison
+% Purpose: compare synthesis with individual-dataset intensity estimates.
+% ==============================================================================
+\begin{frame}{Table 2 comparison: change in intensity since 2003}
+\centering\includegraphics[width=14.2cm,height=5.25cm,keepaspectratio]{0923_reproduction_assets/intensity_comparison.pdf}
+\par\raggedright\small
+Our estimates share the report's positive warming direction. Dataset-level differences from the synthesis remain substantial; interval overlap is not a test of reproduction accuracy.
+\src{Black: report Table 2 synthesis; colors: saved single-dataset estimates. Bars: 95\% intervals. Our intervals use 200 requested parameter-bootstrap fits (173--200 successful). Report values transcribed directly. Units: $^\circ$C.}
+\end{frame}
+
+
+
+% ==============================================================================
+% Slide 10 — Table 2 probability-ratio comparison
+% Purpose: compare synthesis with individual-dataset PR/RR estimates.
+% ==============================================================================
+\begin{frame}{Table 2 comparison: probability ratios}
+\small Each cell shows \textbf{2003-like / 1976-like}. PR in the report and RR in our code denote the same probability ratio.
+\medskip
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.5}
+\centering
+\begin{tabular}{llrrrrr}\toprule
+Index & Period & Report & ERA5 & CPC & E-OBS & Berkeley\\\midrule
+Tx3x & Annual & $13.9/580$ & $37.1/40221$ & $3.74/9.15$ & $19.4/2082$ & $9.53/195$\\
+Tx3x & June & $286/{>}10^6$ & $3788/\infty$ & $\infty/\infty$ & $77.3/3.09{\times}10^{17}$ & $57.3/\infty$\\
+Tn3x & Annual & $163/{>}10^6$ & --- & $103/6.47{\times}10^{10}$ & $7.68/255$ & ---\\
+Tn3x & June & $295/{>}10^6$ & --- & $\infty/\infty$ & $7.72/61.6$ & ---\\\bottomrule
+\end{tabular}
+\par\medskip\raggedright\footnotesize
+Point estimates only. For Annual Tx3x vs 2003-like, 95\% intervals are: report [2.28, 4980], ERA5 [5.61, $\infty$], CPC [1.63, 56.0], E-OBS [4.51, $\infty$], Berkeley [3.52, 15505].\par\medskip
+\small Large discrepancies in tail probabilities remain. $\infty$ indicates zero fitted counterfactual probability at the threshold; the report's $>10^6$ is a reporting bound, not an exact infinity.
+\src{Sources: original Table 2 and saved PROVISIONAL result CSVs. Same prescribed return periods and GMST decrements; our input snapshots, preprocessing and synthesis are not fully aligned.}
+\end{frame}
+
+
+
+% ==============================================================================
+% Slide 11 — Reproduction status and remaining gaps
+% Purpose: summarize agreements, discrepancies, and unfinished work.
+% ==============================================================================
+\begin{frame}{Reproduction assessment and remaining gaps}
+\begin{columns}[T,onlytextwidth]
+\column{.48\textwidth}
+\textbf{What we reproduced}\par\medskip
+\small The location-shift GEV workflow, fixed return periods and $0.6/1.1^\circ$C GMST comparisons.\\[3mm]
+ERA5 Tx3x, CPC, E-OBS and Berkeley individual fits, plus the structure of Figure 7.\\[3mm]
+The report's qualitative warming direction. Quantitative agreement is incomplete, especially for risk ratios.
+\column{.48\textwidth}
+\textbf{What prevents an exact match}\par\medskip
+\small E-OBS version and source snapshots differ; land masks, missing-data rules and time windows need alignment.\\[2mm]
+Our 2026 GMST endpoint is extrapolated; the author's endpoint inputs have not been matched.\\[2mm]
+Bootstrap design and optimizer may differ. Our intervals omit GMST uncertainty.
+\end{columns}
+\medskip\small\textcolor{teal}{ Next Step: Checking/considering if the  ENSO/NAO covariate are not improving the model}
+\src{Evidence: report Appendix A1; original Figures / Table 2; saved reproduction scripts and output CSVs. The present comparisons do not constitute a completed numerical replication.}
+\end{frame}
+
+% ==============================================================================
+% Section 2 PN,PS,PNS in Hannart et al. (2016)
+% ==============================================================================
+
+\section{PN,PS,PNS in Hannart et al. (2016)}
+
+\begin{frame}[plain,noframenumbering]
+    \sectionpage
+\end{frame}
+
+
+% Slide 12: Establish the factual/counterfactual notation before introducing
+% conditional probabilities. Y_0 and Y_1 refer to the same situation.
+\begin{frame}{Set-up: two potential outcomes}
+  \begin{itemize}
+    \item $X=1$: the forcing is present; $X=0$: it is absent.
+    \item $Y=1$: the defined extreme event occurs.
+    \item $Y_1$ and $Y_0$: whether the event would occur with and without the forcing, respectively, for the same situation.
+  \end{itemize}
+  \begin{block}{Two questions}
+    For an event that occurred, would it have occurred without the forcing?\\[0.4em]
+    For an event that did not occur, would adding the forcing make it occur?
+  \end{block}
+  \src{Source: Hannart et al. (2016).}
+\end{frame}
+
+% Slide 13: These are definitions, not formulas inferred from p_0 and p_1.
+% Consistency gives Y=Y_1 for X=1 and Y=Y_0 for X=0.
+% PN conditions on an observed event; PS conditions on an observed non-event.
+% PNS is unconditional over the target population.
+\begin{frame}{Three probabilities of causation}
+  \begin{align*}
+    \mathrm{PN}  &= P(Y_0=0\mid X=1,Y=1),\\[0.35em]
+    \mathrm{PS}  &= P(Y_1=1\mid X=0,Y=0),\\[0.35em]
+    \mathrm{PNS} &= P(Y_0=0,Y_1=1).
+  \end{align*}
+  \begin{itemize}
+    \item \textbf{PN (necessity):} Among events that occurred with forcing, how many would disappear without it?
+    \item \textbf{PS (sufficiency):} Among non-events without forcing, how many would occur if forcing were added?
+    \item \textbf{PNS (necessity and sufficiency):} How many situations are switched from $0$ to $1$ by the forcing?
+  \end{itemize}
+  \src{Source: Hannart et al. (2016).}
+\end{frame}
+
+% Slide 14: Enumerate all four possible pairs of potential outcomes.
+% Monotonicity is an individual-level statement: it excludes (Y_0,Y_1)=(1,0).
+% A population-level finding p_1 >= p_0 alone does not establish monotonicity.
+% Exogeneity allows observed risks P(Y=1|X=x) to represent P(Y_x=1).
+\begin{frame}{Why the formulas work: response types}
+  \centering
+  \begin{tabular}{ccc}
+    \toprule
+    $Y_0$ & $Y_1$ & Response to the forcing \\
+    \midrule
+    0 & 0 & Never occurs \\
+    0 & 1 & Occurs only with forcing (caused) \\
+    1 & 0 & Prevented by forcing \\
+    1 & 1 & Occurs either way \\
+    \bottomrule
+  \end{tabular}
+  \vspace{0.8em}
+
+  \begin{block}{Assumptions for exact identification}
+    \textbf{Monotonicity:} $Y_1\geq Y_0$ for every situation, excluding the $(1,0)$ row.\\
+    \textbf{Exogeneity:} the forcing is independent of potential outcomes, so the factual and counterfactual risks equal $p_x=P(Y_x=1)$.
+  \end{block}
+  \src{Source: Hannart et al. (2016).}
+\end{frame}
+
+% Slide 15: Under monotonicity, p_0 is the share of (1,1) cases, while p_1
+% includes both (1,1) and (0,1). Their difference is the share of (0,1).
+% With exogeneity, conditioning on X does not change the share of response
+% types, so PN and PS use the same (0,1) numerator with different denominators.
+% The denominators must be positive for the corresponding conditional
+% probabilities to be defined.
+\begin{frame}{Derivation from the two risks}
+  Let $p_1=P(Y_1=1)$ and $p_0=P(Y_0=1)$. Under monotonicity,
+  \[
+    \underbrace{p_1}_{(0,1)+(1,1)}
+    -\underbrace{p_0}_{(1,1)}
+    =\underbrace{P(Y_0=0,Y_1=1)}_{\text{caused type}}.
+  \]
+  Under exogeneity as well, the caused type is the numerator of each conditional probability:
+  \begin{align*}
+    \mathrm{PNS} &= p_1-p_0,\\
+    \mathrm{PN}  &= \frac{p_1-p_0}{p_1}
+                  =1-\frac{p_0}{p_1}\quad(p_1>0),\\
+    \mathrm{PS}  &= \frac{p_1-p_0}{1-p_0}
+                  =1-\frac{1-p_1}{1-p_0}\quad(p_0<1).
+  \end{align*}
+  \src{Source: Hannart et al. (2016).}
+\end{frame}
+
+% Slide 16: Connect PN to the familiar fraction of attributable risk (FAR).
+% This equality needs both exogeneity and monotonicity. Without monotonicity,
+% p_1-p_0 is the caused share minus the prevented share; the displayed
+% expressions are then lower bounds rather than exact probabilities.
+% The example highlights that PN and PS can differ because they condition
+% on different observed groups.
+\begin{frame}{Interpretation and limits}
+  \begin{itemize}
+    \item \textbf{Ex post attribution:} PN asks whether an observed event needed the forcing. Under the two assumptions, $\mathrm{PN}=1-p_0/p_1=\mathrm{FAR}$.
+    \item \textbf{Prospective question:} PS asks whether adding the forcing would produce an event that otherwise would not occur.
+    \item \textbf{Without monotonicity:} $p_1-p_0$ subtracts the fraction prevented by forcing from the fraction caused by it. The probabilities are generally not identified by $p_0,p_1$ alone; the expressions above give lower bounds (truncated at zero).
+  \end{itemize}
+  \begin{block}{Example: $p_0=0.02$, $p_1=0.10$}
+    $\mathrm{PNS}=0.08,\qquad \mathrm{PN}=0.80,\qquad \mathrm{PS}\approx0.082.$
+  \end{block}
+  \src{Source: Hannart et al. (2016).}
+\end{frame}
+
+\end{document}
+
+
