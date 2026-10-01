@@ -1,0 +1,689 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,amsmath,booktabs,graphicx}
+\definecolor{ink}{HTML}{183248}
+\definecolor{teal}{HTML}{187B84}
+\definecolor{rust}{HTML}{CB593C}
+\setbeamercolor{normal text}{fg=ink,bg=white}
+\setbeamercolor{frametitle}{fg=ink}
+\setbeamercolor{structure}{fg=teal}
+\setbeamercolor{alerted text}{fg=rust}
+\setbeamerfont{frametitle}{size=\Large,series=\bfseries}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{\hfill\scriptsize Siyan Wang\enspace|\enspace Preliminary reproduction\enspace|\enspace\insertframenumber/\inserttotalframenumber\hspace{5mm}\vspace{3mm}}
+\setbeamersize{text margin left=7mm,text margin right=7mm}
+\newcommand{\src}[1]{\par\vspace{1mm}{\fontsize{6.5}{8}\selectfont\color{gray}#1\par}}
+\title{9/30 research meeting}
+\author{Siyan Wang}
+\date{30 September 2026}
+
+\begin{document}
+
+% ==============================================================================
+% Title page — plain frames show no footer and do not increment slide numbers.
+% ==============================================================================
+\begin{frame}[plain,noframenumbering]
+  \titlepage
+\end{frame}
+
+\section{European heatwave attribution: reproduction results}
+
+\begin{frame}[plain,noframenumbering]
+  \sectionpage
+\end{frame}
+
+
+% ==============================================================================
+% Slide 01 — Aim and workflow
+% Purpose: state the reproduction question, summarize the full pipeline, and interpret long return periods.
+% ================================================================================
+\begin{frame}{Aim and reproduction workflow}
+\small
+\textbf{Aim}\par\smallskip
+\footnotesize Reproduce the report's observation-based attribution of European heat extremes, test robustness across ERA5, CPC, E-OBS and Berkeley Earth, and compare our fitted curves and attribution estimates with the published Figure~7 and Table~2.
+\medskip
+
+\textbf{Workflow}\par\smallskip
+\scriptsize
+\begin{beamercolorbox}[sep=1.5mm,rounded=true]{block body}
+Daily gridded Tmax/Tmin
+$\rightarrow$ fixed land footprint
+$\rightarrow$ area-weighted regional daily temperature
+$\rightarrow$ three-day mean
+$\rightarrow$ Annual/June Tx3x or Tn3x
+$\rightarrow$ pair with smoothed NASA GMST
+$\rightarrow$ fit a nonstationary GEV
+$\rightarrow$ compare factual and cooler climates.
+\end{beamercolorbox}
+\medskip
+
+\textbf{How can a record shorter than 100 years give a 100-year return period?}\par\smallskip
+\footnotesize All available annual extremes estimate one GEV distribution. At the 2026 factual GMST, the 100-year return level is its 99th percentile:
+\[
+P(X>z_{100}\mid G_{2026})=0.01,
+\qquad
+z_{100}=F^{-1}_{\mathrm{GEV}}(0.99\mid G_{2026}).
+\]
+A ``100-year event'' therefore means a fitted annual exceedance probability of 1\%; it does not require observing a complete 100-year cycle. When the record is shorter than 100 years, this is tail extrapolation, so it is sensitive to the GEV shape and has wider uncertainty; we report bootstrap intervals alongside the point estimate.
+\src{Workflow follows the report's observational attribution design and the reproduction scripts.}
+\end{frame}
+
+
+% ================================================================================
+% Slide 02 — Data products
+% Purpose: distinguish reanalysis from observation-based gridded products.
+% ==============================================================================
+\begin{frame}{Four gridded temperature products}
+\footnotesize
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{p{1.25cm}p{4.35cm}p{2.15cm}p{5.35cm}}\toprule
+Product & Type of data & Fit period & Main characteristic\\\midrule
+ERA5 & Reanalysis: observations assimilated into a numerical weather model & 1950--2025 & Continuous and physically consistent; model-dependent.\\
+E-OBS & Gridded station observations over European land (spatial interpolation) & 1920--2025 & High European resolution with uncertainty estimates; coverage varies by country and period.\\
+CPC & Gridded station-based daily temperature analysis (GTS observations) & 1979--2025 & Frequently updated, but has the shortest record.\\
+Berkeley & Observation-based gridded daily land temperature reconstruction & 1897--2023 annual; 1897--2024 June & Longest record with breakpoint correction; daily data are experimental.\\\bottomrule
+\end{tabular}
+\medskip
+\scriptsize All four products are gridded. ERA5 combines observations with a numerical model. The other three construct spatial fields primarily from station observations. Agreement across them tests sensitivity to different source data and processing methods.
+\src{Sources: report Appendix A1.1; product metadata; saved fit-year records.}
+\end{frame}
+
+
+% ==============================================================================
+% Slide 03 — NASA GISTEMP upstream construction
+% Purpose: explain where one global monthly anomaly comes from before our code starts.
+% ================================================================================
+\begin{frame}{NASA turns many observations into one global anomaly each month}
+\footnotesize
+\begin{columns}[T,onlytextwidth]
+\column{.48\textwidth}
+\textbf{1. Two monthly input fields}
+\begin{itemize}
+  \item \textbf{Land:} adjusted monthly mean surface-air temperatures from NOAA GHCN v4 stations.
+  \item \textbf{Ocean:} monthly sea-surface temperatures from NOAA ERSST v5.
+\end{itemize}
+\medskip
+\textbf{2. Work with local anomalies}
+\begin{itemize}
+  \item For each location and calendar month, subtract its own 1951--1980 mean.
+  \item January is compared with January, February with February, and so on; this removes local climate and the seasonal cycle.
+\end{itemize}
+
+\column{.48\textwidth}
+\textbf{3. Build a spatially complete index}
+\begin{itemize}
+  \item GISTEMP processes the anomaly series on an equal-area grid; its standard land analysis uses 1200-km smoothing to estimate nearby unsampled areas.
+  \item Land anomalies are combined with the ERSST ocean anomaly field.
+\end{itemize}
+\medskip
+\textbf{4. Average globally}
+\begin{itemize}
+  \item Equal-area subboxes are aggregated into latitude zones and broad latitude bands.
+  \item Area-weighting those bands gives one Land--Ocean Temperature Index (L-OTI) anomaly for that month.
+\end{itemize}
+\end{columns}
+\begin{beamercolorbox}[sep=1.5mm,rounded=true]{block body}
+\scriptsize \textbf{Starting point of this reproduction:} NASA has already performed the station/ocean merging, gap handling and global spatial averaging. We download the resulting monthly global index; we do not average raw stations ourselves.
+\end{beamercolorbox}
+\src{Sources: NASA GISTEMP v4 data page and FAQ; GHCN v4 + ERSST v5; 1951--1980 anomaly baseline.}
+\end{frame}
+
+
+% ================================================================================
+% Slide 04 — Downloaded GMST structure and our annualization
+% Purpose: separate NASA's upstream global aggregation from our temporal processing.
+% ================================================================================
+\begin{frame}{The NASA output is a year-by-month table; our code annualizes it}
+\begin{columns}[T,onlytextwidth]
+\column{.49\textwidth}
+\textbf{What we download}\par\smallskip
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{rrrrrrr}\toprule
+Year & Jan & Feb & Mar & $\cdots$ & Dec & J--D\\\midrule
+2023 & 0.88 & 0.97 & 1.23 & $\cdots$ & 1.36 & 1.17\\
+2024 & 1.25 & 1.44 & 1.40 & $\cdots$ & 1.27 & 1.29\\
+2025 & 1.38 & 1.26 & 1.37 & $\cdots$ & 1.06 & 1.19\\
+2026 & 1.09 & 1.25 & 1.32 & $\cdots$ & missing & missing\\\bottomrule
+\end{tabular}
+\par\medskip
+\footnotesize One row is a year; Jan--Dec are NASA global monthly L-OTI anomalies in $^\circ$C. ``J--D'' is NASA's annual summary, but our code reads the twelve monthly columns directly.
+
+\column{.47\textwidth}
+\textbf{Our Step 1: one value per complete year}\par
+\small
+\[
+ g_y=\frac{1}{12}\sum_{m=1}^{12}g_{y,m}.
+\]
+\footnotesize We calculate $g_y$ only when all twelve NASA monthly global anomalies are finite. Thus a partial 2026 row is not treated as an observed annual GMST.
+\medskip
+
+\textbf{Our Step 2: the report's four-year smoothing}\par
+\small
+\[
+G_t=\frac14(g_{t-2}+g_{t-1}+g_t+g_{t+1}).
+\]
+\footnotesize The four-year mean is assigned to year 3 of its window, so $G_{2026}$ requires annual values for 2024--2027.
+\end{columns}
+\src{Sources: NASA GISTEMP v4 global L-OTI CSV; prepare\_gmst.R.}
+\end{frame}
+
+
+% ================================================================================
+% Slide 05 — Smoothed GMST endpoint
+% Purpose: make the provisional endpoint calculation and its status explicit.
+% ================================================================================
+\begin{frame}{The 2026 smoothed endpoint requires two provisional annual values}
+\begin{columns}[T,onlytextwidth]
+\column{.50\textwidth}
+\textbf{Why extrapolation enters}\par\medskip
+\small NASA's 2026 row is incomplete and 2027 has not been observed, but the year-3 four-year window needs both annual values. For this reproduction, we fit
+\[
+ g_y=a+by+\varepsilon_y
+\]
+by ordinary least squares to the last fifteen complete annual anomalies, 2011--2025, and predict 2026 and 2027.
+
+\column{.46\textwidth}
+\textbf{Values used at the endpoint}\par\smallskip
+\footnotesize
+\begin{tabular}{rrrr}\toprule
+2024 & 2025 & 2026* & 2027*\\\midrule
+1.28583 & 1.19333 & 1.22714 & 1.26606\\\bottomrule
+\end{tabular}
+\[
+\widehat G_{2026}
+=1.24309^\circ\mathrm C.
+\]
+\scriptsize *OLS predictions, not observations.
+\end{columns}
+\begin{beamercolorbox}[sep=1.5mm,rounded=true]{alertblock body}
+\scriptsize The report specifies the four-year, year-3 smoothing convention but does not document this endpoint extrapolation. Therefore $\widehat G_{2026}$ is a provisional reproduction assumption.
+\end{beamercolorbox}
+\src{Sources: report Appendix A1.1; prepare\_gmst.R; saved endpoint assumptions.}
+\end{frame}
+
+
+% ================================================================================
+% Slide 06 — Why anomalies work
+% Purpose: answer why anomaly data can act as the GMST covariate.
+% ==============================================================================
+\begin{frame}{A fixed anomaly baseline does not change the attribution fit}
+\begin{columns}[T,onlytextwidth]
+\column{.52\textwidth}
+\small Suppose absolute GMST and the reported anomaly differ by a constant $c$:
+\[
+G_t^{\mathrm{absolute}}=G_t^{\mathrm{anomaly}}+c.
+\]
+The report's location model can be written as
+\[
+\mu_t=\mu_0+\alpha G_t^{\mathrm{anomaly}}
+     =(\mu_0-\alpha c)+\alpha G_t^{\mathrm{absolute}}.
+\]
+Changing the baseline changes only the intercept.
+
+\column{.44\textwidth}
+\textbf{Quantities that remain unchanged}\par\medskip
+\small
+\begin{itemize}
+  \item the GMST slope $\alpha$;
+  \item differences such as $G_F-G_C$;
+  \item fitted probabilities and return levels;
+  \item probability ratios and intensity changes.
+\end{itemize}
+\medskip
+\footnotesize Our code centers GMST internally at its fit-period mean for numerical convenience. That is an algebraically equivalent parameterization, not a separate method specified by the report.
+\end{columns}
+\src{Source: report Appendix A1.2; helpers/gev.R.}
+\end{frame}
+
+
+% ==============================================================================
+% Slide 07 — Origins and upstream processing of temperature products
+% Purpose: distinguish upstream product construction from our dataset-specific choices.
+% ================================================================================
+\begin{frame}{How the four daily temperature products are constructed}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.20}
+\begin{tabular}{p{1.05cm}p{2.75cm}p{4.35cm}p{5.35cm}}\toprule
+Product & Input observations & Upstream product construction & Choice made in this reproduction\\\midrule
+ERA5 & Multi-source observations + numerical weather prediction
+& Data assimilation creates a physically consistent analysis; short forecasts supply hourly maximum 2-m temperature (`mx2t').
+& Climate Explorer derives the daily maximum; we convert K to $^\circ$C.\\
+CPC & GTS station observations
+& Station quality control followed by interpolation to a regular global grid.
+& We download the regional daily subset; values are already in $^\circ$C.\\
+E-OBS & European station observations
+& Interpolation over European land; an ensemble describes interpolation uncertainty.
+& We use the ensemble mean from v33.0e; the report used v32.0e.\\
+Berkeley & Merged station observations
+& Breakpoint correction followed by spatial reconstruction of the anomaly field.
+& We use `full': anomaly plus daily climatology, yielding absolute Tmax.\\\bottomrule
+\end{tabular}
+\medskip
+\footnotesize The products therefore differ before our code begins: ERA5 is model--observation reanalysis, while the other three reconstruct gridded fields mainly from stations. Our later workflow applies a common regional aggregation while retaining these upstream differences.
+\src{Sources: NetCDF metadata and histories; product documentation; report Appendix A1.1.}
+\end{frame}
+
+
+% ================================================================================
+% Slide 08 — Raw file structures
+% Purpose: show enough of the actual arrays to make later aggregation concrete.
+% ==============================================================================
+\begin{frame}{The raw temperature files are daily space--time arrays}
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{p{1.45cm}p{3.0cm}p{2.1cm}p{2.0cm}p{2.15cm}p{2.4cm}}\toprule
+Product & Variable & Stored dimensions & Regional grid & Unit & Year starts\\\midrule
+ERA5 & `tmax(time,lat,lon)' & $28002\times81\times123$ & about $0.25^\circ$ & K & 1950\\
+CPC Tmax/Tmin & `tmax(time,lat,lon)' & $17423\times40\times61$ & $0.5^\circ$ & $^\circ$C & 1979\\
+E-OBS & `tx'/`tn(time,lat,lon)' & $38929\times80\times122$ & $0.25^\circ$ & $^\circ$C & 1979\\
+Berkeley & `TMAX(time,lat,lon)' & $46617\times20\times31$ & $1^\circ$ & $^\circ$C & 1897 \\\bottomrule
+\end{tabular}
+\medskip
+\small Each day is a two-dimensional temperature map over $40$--$60^\circ$N, $10.5^\circ$W--$20^\circ$E. The task is to convert each map into one land-only regional temperature without allowing the represented area to change arbitrarily over time.
+\src{Source: headers of the six downloaded NetCDF files. Dimensions are shown as time $\times$ latitude $\times$ longitude.}
+\end{frame}
+
+
+% ==============================================================================
+% Slide 09 — Why a footprint enters the workflow
+% Purpose: connect the report's event box to the need for a fixed land-support mask.
+% ================================================================================
+\begin{frame}{The event box does not yet define what enters the regional mean}
+\small
+\textbf{The report first defines the event in space:}
+$10.5^\circ$W--$20^\circ$E and $40^\circ$--$60^\circ$N.
+That rectangle is the common outer boundary for all four products.
+\medskip
+
+\begin{columns}[T,onlytextwidth]
+\column{.30\textwidth}
+\begin{block}{Inside the box}
+\footnotesize There are land cells, ocean cells and coastal cells. The four products do not mark or observe them in the same way.
+\end{block}
+
+\column{.30\textwidth}
+\begin{block}{If we average blindly}
+\footnotesize ERA5 would mix land and ocean, while station-based products would average only whichever cells happen to be available on each day.
+\end{block}
+
+\column{.32\textwidth}
+\begin{block}{Required before averaging}
+\footnotesize We must decide once which cells represent the study region, then hold that spatial support fixed through time.
+\end{block}
+\end{columns}
+\vspace{1mm}
+\[
+\boxed{\text{event bounding box}\;\longrightarrow\;\text{fixed eligible cells}\;\longrightarrow\;\text{daily regional mean}}
+\]
+\begin{beamercolorbox}[sep=1.5mm,rounded=true]{block body}
+\footnotesize \textbf{Footprint} means this fixed set of eligible grid cells. It is a data-processing mask, not the observed outline of the 2026 heatwave and not the set of cells that were hottest on a particular day.
+\end{beamercolorbox}
+\src{Source: report Section 1.3 for the event box; reproduction workflow for the fixed spatial support.}
+\end{frame}
+
+
+% ================================================================================
+% Slide 10 — Dataset-specific footprint construction
+% Purpose: show how the fixed support is built and why ERA5 differs.
+% ================================================================================
+\begin{frame}{We construct the footprint once, then reuse it every day}
+\begin{columns}[T,onlytextwidth]
+\column{.49\textwidth}
+\textbf{CPC, E-OBS and Berkeley}\par\medskip
+\small These station-based grids generally lack values over ocean. We use persistent data availability as a practical proxy for stable land coverage:
+\[
+M_i=\mathbf 1\!\left(
+\frac{\#\{d:T_{d,i}\ \mathrm{finite}\}}{\#\{d\}}\ge0.95
+\right).
+\]
+\footnotesize A cell is eligible only when it contains a finite value on at least 95\% of all dates in that product's downloaded record. The resulting $M_i$ is fixed for the full daily calculation.
+
+\column{.47\textwidth}
+\textbf{ERA5}\par\medskip
+\small ERA5 supplies valid 2-m temperature over both land and ocean. Its own missingness therefore cannot identify land. We map the saved E-OBS footprint to the nearest ERA5 grid cells and use that mapped mask on every ERA5 day.
+\medskip
+
+\textbf{Interpretation}\par\smallskip
+\footnotesize This makes the four regional series approximately land-comparable and prevents daily spatial coverage from drifting. It is a reproduction choice: the 95\% rule mixes coastline with long-record availability, and nearest-neighbour mapping can misclassify coastal ERA5 cells. A native ERA5 land--sea mask is a useful sensitivity test.
+\end{columns}
+\src{Sources: helpers/workflow.R; Code/run\_era5\_tx.R; saved grid\_footprint.csv files.}
+\end{frame}
+
+
+% ================================================================================
+% Slide 11 — Spatial aggregation
+% Purpose: show exactly how a daily grid becomes one regional value.
+% ==============================================================================
+\begin{frame}{Each daily grid becomes one area-weighted regional value}
+\begin{columns}[T,onlytextwidth]
+\column{.54\textwidth}
+\small For day $d$, grid cell $i$ has latitude $\phi_i$, mask $M_i$, and validity indicator $V_{d,i}$. We use
+\[
+w_i=\cos(\phi_i)M_i,
+\]
+\[
+\overline T_d=
+\frac{\sum_i V_{d,i}w_iT_{d,i}}
+     {\sum_i V_{d,i}w_i}.
+\]
+The cosine weight approximates the area represented by a regular longitude--latitude cell. The denominator is recalculated from valid cells each day.
+
+\column{.42\textwidth}
+\textbf{Daily quality rule}\par\medskip
+\small Define weighted coverage as
+\[
+C_d=\frac{\sum_iV_{d,i}w_i}{\sum_iw_i}.
+\]
+If $C_d<0.95$, we set the regional daily value to missing.\par\medskip
+\footnotesize This step produces one regional daily Tmax or Tmin. It does not select the hottest grid cell and does not average land and ocean together.
+\end{columns}
+\src{Source: helpers/workflow.R and the dataset-specific run scripts.}
+\end{frame}
+
+
+% ==============================================================================
+% Slide 12 — Three-day extremes
+% Purpose: explain order of operations and the meaning of Tx3x/Tn3x.
+% ==============================================================================
+\begin{frame}{Regional daily temperature becomes Tx3x or Tn3x}
+\begin{columns}[T,onlytextwidth]
+\column{.55\textwidth}
+\textbf{Common processing order}\par\medskip
+\small
+\begin{enumerate}
+  \item Calculate the land-only regional value $\overline T_d$ for each day.
+  \item Calculate a trailing three-day mean:
+  \[
+  \overline T_{3,d}=\frac{\overline T_{d-2}+\overline T_{d-1}+\overline T_d}{3}.
+  \]
+  \item Take the maximum within each calendar year or within June.
+\end{enumerate}
+
+\column{.41\textwidth}
+\textbf{Definitions}\par\medskip
+\small
+\[
+\mathrm{Tx3x}_y=\max_d\overline T^{\max}_{3,d},
+\]
+\[
+\mathrm{Tn3x}_y=\max_d\overline T^{\min}_{3,d}.
+\]
+\footnotesize Tn3x is the maximum three-day mean of daily minimum temperature, representing the warmest sequence of nights. It is not a minimum.\par\medskip
+An Annual or June block enters the fit only if at least 95\% of its daily regional values are finite. June windows remain fully inside June; annual windows remain inside the calendar year.
+\end{columns}
+\src{Source: helpers/workflow.R. We first average in space, then average over three days, then take the temporal maximum.}
+\end{frame}
+
+
+% ==============================================================================
+% Slide 13 — GEV and finite-record return levels
+% Purpose: explain how a 100-year threshold can be estimated from shorter data.
+% ==============================================================================
+\begin{frame}{A 100-year threshold can exceed the length of the record}
+\begin{columns}[T,onlytextwidth]
+\column{.50\textwidth}
+\textbf{One nonstationary GEV across all years}\par\medskip
+\small Each annual or June extreme $X_t$ is paired with its smoothed GMST $G_t$:
+\[
+X_t\sim\mathrm{GEV}(\mu_t,\sigma,\xi),
+\qquad \mu_t=\mu_0+\alpha G_t.
+\]
+The data estimate the common parameters $\mu_0,\alpha,\sigma,\xi$. We do not fit a separate GEV to each year.
+
+\column{.46\textwidth}
+\textbf{Return-level threshold}\par\medskip
+\small For return period $T$, the factual threshold is
+\[
+x_T=F_F^{-1}\!\left(1-\frac1T\right).
+\]
+For $T=100$, this is the fitted 0.99 quantile. A 47-year CPC record can therefore yield a 100-year threshold because the parametric GEV extrapolates beyond the observed ranks.\par\medskip
+\footnotesize The estimate is model-dependent and can be highly uncertain. Parameter bootstrap refits simulated records and propagates this tail uncertainty into intervals. It does not create additional observed years.
+\end{columns}
+\src{Source: report Appendix A1.2; helpers/gev.R and helpers/workflow.R.}
+\end{frame}
+
+
+% ==============================================================================
+% Slide 14 — Model choice and attribution
+% Purpose: define RR/intensity and record the report's ENSO/NAO decision.
+% ==============================================================================
+\begin{frame}{Attribution compares the same event across climate states}
+\begin{columns}[T,onlytextwidth]
+\column{.49\textwidth}
+\textbf{Event definitions used in the report}\par\smallskip
+\small
+\begin{tabular}{lrr}\toprule
+Return period & Tx3x & Tn3x\\\midrule
+Annual & 25 yr & 20 yr\\
+June & 100 yr & 100 yr\\\bottomrule
+\end{tabular}
+
+\medskip
+
+\footnotesize
+$G_F$ is the assumed 2026 GMST. Counterfactual climates use
+\[
+G_C=G_F-0.6^\circ\mathrm C
+\quad\text{or}\quad
+G_F-1.1^\circ\mathrm C,
+\]
+representing 2003-like and 1976-like warming levels.
+
+\column{.47\textwidth}
+\textbf{Probability and intensity changes}\par
+\scriptsize
+\[
+x_F=F_F^{-1}(1-1/T),\qquad
+RR=\frac{1/T}{1-F_C(x_F)},
+\]
+\[
+FAR= 1-\frac{1}{RR}
+\]
+\[
+\Delta I=F_F^{-1}(1-1/T)-F_C^{-1}(1-1/T)
+=\alpha\Delta G.
+\]
+\footnotesize Appendix A1.2 also tests $\mu_t=\mu_0+\alpha G_t+\beta I_t$, with detrended Ni\~no3.4 or NAO as $I_t$. Table 3 finds no AIC improvement, so the report excludes these indices from the remaining analysis. We retain the GMST-only model.
+\end{columns}
+\src{Sources: report Appendix A1.2, Section 2.1.1 and Table 3.}
+\end{frame}
+
+
+% ==============================================================================
+% Slide 15 — Figure 7 construction
+% Purpose: explain every graphical element before showing comparisons.
+% ==============================================================================
+\begin{frame}{How to read Figure 7}
+\begin{columns}[T,onlytextwidth]
+\column{.49\textwidth}\centering
+\includegraphics[width=\linewidth,height=5.6cm,keepaspectratio,trim=0 263 341 25,clip]{../materials/0930_reproduction_assets/figure7.pdf}
+
+\column{.47\textwidth}
+\scriptsize
+\textbf{Curves.} For probabilities $p=1-1/T$, the red and blue curves plot $F_F^{-1}(p)$ and $F_P^{-1}(p)$ against return period $T$. Red uses 2026 GMST; blue uses $G_F-1.1^\circ$C.\par\smallskip
+\textbf{Points.} Each observed annual extreme is shifted to a common climate before ranking:
+\[
+X_{t,F}=X_t+\widehat\alpha(G_F-G_t),\qquad
+X_{t,P}=X_t+\widehat\alpha(G_P-G_t).
+\]
+The x-coordinate is an empirical return period from the rank, not the observation year. Red and blue points are two adjustments of the same observations.\par\smallskip
+\textbf{Bands.} Shading gives 95\% intervals from parameter bootstrap fits.\par\smallskip
+\textbf{Purple line and bottom marks.} The horizontal line is the current 25-year Annual Tx3x threshold. The red and blue marks show its return period in the two fitted climates.
+\end{columns}
+\src{Source: plot\_figure7.R. The report caption defines the climate curves and threshold; our code makes the point and band construction explicit.}
+\end{frame}
+
+
+% ==============================================================================
+% Slide 16 — ERA5 Figure 7 comparison
+% ==============================================================================
+\begin{frame}{Figure 7 comparison: ERA5 annual Tx3x}
+\begin{columns}[T,onlytextwidth]
+\column{.47\textwidth}\centering\small\textbf{Report: Figure 7a}\par
+\includegraphics[height=4.3cm,trim=104 575 303 72,clip]{/Users/wangcaiyan/extreme-event-attribution/0923_reproduction_assets/report_page12.pdf}
+\column{.49\textwidth}\centering\small\textbf{Our reproduction: ERA5}\par
+\includegraphics[width=\linewidth,height=4.3cm,keepaspectratio,trim=0 263 341 25,clip]{../materials/0930_reproduction_assets/figure7.pdf}
+\end{columns}
+\medskip\small
+Both fits shift upward from the 1976-like climate to the current climate. Our fitted current 25-year level is $30.90^\circ$C; the same threshold has a fitted past return period of about $1.01\times10^6$ years.
+\src{Report p.12, Fig.7a; saved ERA5 Figure 7 reproduction. Fit period: 1950--2025; plotted bands use 300 parameter-bootstrap fits.}
+\end{frame}
+
+
+% ==============================================================================
+% Slide 17 — CPC Figure 7 comparison
+% ==============================================================================
+\begin{frame}{Figure 7 comparison: CPC annual Tx3x}
+\begin{columns}[T,onlytextwidth]
+\column{.47\textwidth}\centering\small\textbf{Report: Figure 7b}\par
+\includegraphics[height=4.3cm,trim=298 575 107 72,clip]{/Users/wangcaiyan/extreme-event-attribution/0923_reproduction_assets/report_page12.pdf}
+\column{.49\textwidth}\centering\small\textbf{Our reproduction: CPC}\par
+\includegraphics[width=\linewidth,height=4.3cm,keepaspectratio,trim=346 263 0 25,clip]{../materials/0930_reproduction_assets/figure7.pdf}
+\end{columns}
+\medskip\small
+Our fitted current 25-year threshold is $33.18^\circ$C. The blue curve evaluates the same fitted GEV shape and scale after shifting its location to the 1976-like GMST; the threshold then has a return period of 229 years.
+\src{Report p.12, Fig.7b; saved CPC Figure 7 reproduction. The red and blue points are climate-adjusted versions of the same annual extremes.}
+\end{frame}
+
+
+% ==============================================================================
+% Slide 18 — Berkeley Figure 7 comparison
+% ==============================================================================
+\begin{frame}{Figure 7 comparison: Berkeley annual Tx3x}
+\begin{columns}[T,onlytextwidth]
+\column{.47\textwidth}\centering\small\textbf{Report: Figure 7c}\par
+\includegraphics[height=4.3cm,trim=104 390 291 264,clip]{/Users/wangcaiyan/extreme-event-attribution/0923_reproduction_assets/report_page12.pdf}
+\column{.49\textwidth}\centering\small\textbf{Our reproduction: Berkeley}\par
+\includegraphics[width=\linewidth,height=4.3cm,keepaspectratio,trim=0 0 341 277,clip]{../materials/0930_reproduction_assets/figure7.pdf}
+\end{columns}
+\medskip\small
+Our current 25-year threshold is $31.92^\circ$C; its fitted 1976-like return period is 4,876 years. Berkeley has the longest record, but the far-right tail still depends on the fitted GEV shape rather than direct empirical recurrence.
+\src{Report p.12, Fig.7c; saved Berkeley Figure 7 reproduction. Original axes retained; panel scales differ.}
+\end{frame}
+
+
+% ==============================================================================
+% Slide 19 — E-OBS Figure 7 comparison
+% ==============================================================================
+\begin{frame}{Figure 7 comparison: E-OBS annual Tx3x}
+\begin{columns}[T,onlytextwidth]
+\column{.47\textwidth}\centering\small\textbf{Report: Figure 7d}\par
+\includegraphics[height=4.3cm,trim=298 390 107 264,clip]{/Users/wangcaiyan/extreme-event-attribution/0923_reproduction_assets/report_page12.pdf}
+\column{.49\textwidth}\centering\small\textbf{Our reproduction: E-OBS v33e}\par
+\includegraphics[width=\linewidth,height=4.3cm,keepaspectratio,trim=346 0 0 277,clip]{../materials/0930_reproduction_assets/figure7.pdf}
+\end{columns}
+\medskip\small
+Our current 25-year threshold is $32.05^\circ$C; its fitted 1976-like return period is 52,044 years. The report uses v32.0e, while our input uses v33e, so differences can reflect both sampling and product-version changes.
+\src{Report p.12, Fig.7d; saved E-OBS Figure 7 reproduction. Original axes retained; panel scales differ.}
+\end{frame}
+
+
+% ==============================================================================
+% Slide 20 — Table 2 benchmark
+% Purpose: distinguish report synthesis from single-dataset estimates.
+% ==============================================================================
+\begin{frame}{How to read the report's Table 2}
+\centering
+\includegraphics[width=13.4cm,height=4.7cm,keepaspectratio,trim=44 92 59 528,clip]{/Users/wangcaiyan/extreme-event-attribution/0923_reproduction_assets/report_page12.pdf}
+\par\medskip\raggedright
+\small Each row fixes an event definition and return period. The two climate comparisons report a probability ratio and a change in magnitude. Parentheses are reported 95\% intervals; ``$>1$m'' means greater than $10^6$.\par\smallskip
+\footnotesize Table 2 is a synthesis across observational and reanalysis evidence. Our colored estimates on the next page are individual-dataset results, so Table 2 is a benchmark rather than the expected value for each separate dataset.
+\src{Original Table 2, report p.12; synthesis description on p.13.}
+\end{frame}
+
+
+% ==============================================================================
+% Slide 21 — Intensity plot explanation
+% Purpose: explain the comparison graphic and its uncertainty bars.
+% ==============================================================================
+\begin{frame}{Intensity comparison: estimate, interval and data source}
+\centering
+\includegraphics[width=14.2cm,height=5.25cm,keepaspectratio]{../materials/0930_reproduction_assets/intensity_comparison.pdf}
+\par\raggedright\small
+Each point estimates the warming-related intensity change from the 2003-like climate to 2026. Horizontal lines are 95\% intervals. Black diamonds reproduce the report synthesis; colored circles are our separate dataset fits. The left and right panels use Annual and June extremes.\par\smallskip
+\footnotesize Overlapping intervals show that estimates are statistically compatible at this resolution; they do not prove exact reproduction. Our intervals use parameter bootstrap and omit uncertainty in GMST, the spatial mask and dataset choice.
+\src{Report Table 2 and saved single-dataset estimates. Units: $^\circ$C.}
+\end{frame}
+
+
+% ==============================================================================
+% Slide 22 — Probability-ratio comparison
+% Purpose: show the tail-sensitive results and explain infinities.
+% ==============================================================================
+\begin{frame}{Probability-ratio comparison}
+\small 
+Each cell shows \textbf{2003-like / 1976-like }.
+
+PR in the report and RR in our code denote the same probability ratio.
+
+\medskip
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.5}
+\centering
+\begin{tabular}{llrrrrr}\toprule
+Index & Period & Report & ERA5 & CPC & E-OBS & Berkeley\\\midrule
+Tx3x & Annual & $13.9/580$ & $37.1/40221$ & $3.74/9.15$ & $19.4/2082$ & $9.53/195$\\
+Tx3x & June & $286/{>}10^6$ & $3788/\infty$ & $\infty/\infty$ & $77.3/3.09{\times}10^{17}$ & $57.3/\infty$\\
+Tn3x & Annual & $163/{>}10^6$ & --- & $103/6.47{\times}10^{10}$ & $7.68/255$ & ---\\
+Tn3x & June & $295/{>}10^6$ & --- & $\infty/\infty$ & $7.72/61.6$ & ---\\\bottomrule
+\end{tabular}
+\par\medskip\raggedright\small
+Risk ratios are more sensitive than intensity changes to the fitted upper tail. $\infty$ means the fitted counterfactual exceedance probability is numerically zero, often because a negative-shape GEV has a finite upper endpoint. It does not prove physical impossibility.
+\src{Sources: original Table 2 and saved PROVISIONAL result CSVs. Point estimates shown.}
+\end{frame}
+
+
+% ==============================================================================
+% Slide 23 — Fraction of attributable risk comparison
+% Purpose: express the same probability-ratio results on the bounded FAR scale.
+% ================================================================================
+\begin{frame}{Fraction of attributable risk (FAR) comparison}
+\small
+Each cell shows \textbf{2003-like / 1976-like}.
+
+\[
+\mathrm{FAR}=1-\frac{1}{\mathrm{RR}}.
+\]
+\vspace{-2mm}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.5}
+\centering
+\begin{tabular}{llrrrrr}\toprule
+Index & Period & Report* & ERA5 & CPC & E-OBS & Berkeley\\\midrule
+Tx3x & Annual & $0.9281/0.9983$ & $0.9731/0.99998$ & $0.7327/0.8907$ & $0.9484/0.99952$ & $0.8950/0.9949$\\
+Tx3x & June & $0.9965/{>}0.999999$ & $0.99974/1$ & $1/1$ & $0.9871/1$ & $0.9825/1$\\
+Tn3x & Annual & $0.9939/{>}0.999999$ & --- & $0.9903/1$ & $0.8698/0.9961$ & ---\\
+Tn3x & June & $0.9966/{>}0.999999$ & --- & $1/1$ & $0.8704/0.9838$ & ---\\\bottomrule
+\end{tabular}
+\par\medskip\raggedright\small
+FAR is bounded by one, so very different risk ratios can look almost identical on this scale. A displayed value of 1 results from an infinite or numerically enormous RR; it should not be interpreted as proof that the event was physically impossible in the cooler climate.
+\par\smallskip
+\footnotesize *The report does not tabulate FAR. Its values here are derived from the published probability ratios using $1-1/\mathrm{PR}$; ${>}10^6$ implies FAR ${>}0.999999$.
+\src{Sources: original Table 2; /0930\_reproduction\_assets/results.csv. Point estimates shown.}
+\end{frame}
+
+
+% ================================================================================
+% Slide 24 — Reproduction assessment
+% Purpose: close with what is robust and what still limits exact agreement.
+% ==============================================================================
+\begin{frame}{Reproduction assessment and remaining gaps}
+\begin{columns}[T,onlytextwidth]
+\column{.48\textwidth}
+\textbf{What is reproduced}\par\medskip
+\small The pipeline from daily grids to regional Tx3x/Tn3x, the GMST-dependent location-shift GEV, the prescribed climate comparisons and the structure of Figure 7.\par\medskip
+ERA5 Tx3x, CPC, E-OBS and Berkeley individual fits all give a positive warming signal.
+
+\column{.48\textwidth}
+\textbf{What prevents an exact match}\par\medskip
+\small Product versions, land masks, missing-data rules and endpoint dates may differ from the authors' inputs.\par\medskip
+Our 2026 GMST endpoint uses an undocumented extrapolation. Bootstrap intervals omit GMST, observational and mask uncertainty. Tail probability estimates remain particularly unstable.
+\end{columns}
+\src{Evidence: report Appendix A1; original Figure 7 and Table 2; reproduction scripts, NetCDF metadata and output CSVs.}
+\end{frame}
+
+\end{document}
