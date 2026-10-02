@@ -6,7 +6,7 @@
 # 1. Paths and settings
 # ============================================================================
 
-source("/Users/wangcaiyan/Documents/Codex/2026-09-15/https-spiral-imperial-ac-uk-server/outputs/cpc_rr/config/paths.R")
+source(here::here("Code", "config", "paths.R"))
 
 era5_file <- era5_tmax_file
 land_mask_file <- era5_land_mask_file
@@ -22,8 +22,8 @@ file.exists(gmst_file)
 # ============================================================================
 
 library(ncdf4)
-source(file.path(project_dir, "helpers", "gev.R"))
-source(file.path(project_dir, "helpers", "workflow.R"))
+source(here::here("Code", "helpers", "gev.R"))
+source(here::here("Code", "helpers", "workflow.R"))
 
 # ============================================================================
 # 3. Open and inspect the original ERA5 NetCDF file

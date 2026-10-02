@@ -3,8 +3,8 @@
 # change. Dataset scripts read the saved CSV directly.
 
 # 1. Load paths and the GMST helper
-source("/Users/wangcaiyan/Documents/Codex/2026-09-15/https-spiral-imperial-ac-uk-server/outputs/cpc_rr/config/paths.R")
-source(file.path(project_dir, "helpers", "workflow.R"))
+source(here::here("Code", "config", "paths.R"))
+source(here::here("Code", "helpers", "workflow.R"))
 
 # 2. Read the original NASA GISTEMP monthly anomaly table
 file.exists(gmst_file)

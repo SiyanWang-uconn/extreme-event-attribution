@@ -1,6 +1,6 @@
 # GEV helper checks -- interactive RStudio version
-source("/Users/wangcaiyan/Documents/Codex/2026-09-15/https-spiral-imperial-ac-uk-server/outputs/cpc_rr/config/paths.R")
-source(file.path(project_dir, "helpers", "gev.R"))
+source(here::here("Code", "config", "paths.R"))
+source(here::here("Code", "helpers", "gev.R"))
 
 # 1. Quantile and survival-probability identity
 for(shape in c(-.2,0,.2)) for(p in c(.5,.96,.99,.999)) {

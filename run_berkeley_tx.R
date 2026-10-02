@@ -1,11 +1,10 @@
 # Berkeley Earth Tmax / Tx3x attribution -- interactive RStudio version
 
 # 1. Load paths and helpers
-source(here::here("config","paths.R"))
-#source("/Users/wangcaiyan/Documents/Codex/2026-09-15/https-spiral-imperial-ac-uk-server/outputs/cpc_rr/config/paths.R")
+source(here::here("Code", "config", "paths.R"))
 library(ncdf4)
-source(file.path(project_dir, "helpers", "gev.R"))
-source(file.path(project_dir, "helpers", "workflow.R"))
+source(here::here("Code", "helpers", "gev.R"))
+source(here::here("Code", "helpers", "workflow.R"))
 
 # 2. Dataset settings
 dataset_file <- berkeley_tmax_file
