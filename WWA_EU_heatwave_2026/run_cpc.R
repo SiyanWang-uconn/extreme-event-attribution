@@ -8,7 +8,7 @@
 # 1. Paths and settings
 # ============================================================================
 
-source("/Users/wangcaiyan/Documents/Codex/2026-09-15/https-spiral-imperial-ac-uk-server/outputs/cpc_rr/config/paths.R")
+source(here::here("Code", "config", "paths.R"))
 
 cpc_file <- cpc_tmax_file
 output_dir <- cpc_tmax_output_dir
@@ -23,8 +23,8 @@ file.exists(gmst_file)
 # ============================================================================
 
 library(ncdf4)
-source(file.path(project_dir, "helpers", "gev.R"))
-source(file.path(project_dir, "helpers", "workflow.R"))
+source(here::here("Code", "helpers", "gev.R"))
+source(here::here("Code", "helpers", "workflow.R"))
 
 # ============================================================================
 # 3. Open and inspect the original CPC NetCDF file

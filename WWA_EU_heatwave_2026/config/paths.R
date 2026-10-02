@@ -2,10 +2,6 @@
 # Edit paths here when files move; dataset scripts should not contain paths.
 
 project_dir <- here::here()
-#project_dir <- "/Users/wangcaiyan/Documents/Codex/2026-09-15/https-spiral-imperial-ac-uk-server/outputs/cpc_rr"
-#download_dir <- "/Users/wangcaiyan/Downloads"
-
-gmst_file <- file.path(project_dir, "data", "gistemp_global.csv")
 
 # Input temperature datasets
 cpc_tmax_file <- file.path(

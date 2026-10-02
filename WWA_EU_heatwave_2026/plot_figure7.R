@@ -1,9 +1,9 @@
 # Figure 7-style plot -- interactive RStudio version.
 
 # 1. Load paths and helpers
-source("/Users/wangcaiyan/Documents/Codex/2026-09-15/https-spiral-imperial-ac-uk-server/outputs/cpc_rr/config/paths.R")
-source(file.path(project_dir, "helpers", "gev.R"))
-source(file.path(project_dir, "helpers", "workflow.R"))
+source(here::here("Code", "config", "paths.R"))
+source(here::here("Code", "helpers", "gev.R"))
+source(here::here("Code", "helpers", "workflow.R"))
 output_dir <- figure7_output_dir
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 
