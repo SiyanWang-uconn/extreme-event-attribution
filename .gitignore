@@ -21,3 +21,7 @@ build/
 image/
 
 0923_reproduction_assets/
+
+assets/
+
+manuscript/main.before-*.tex
