@@ -1,178 +1,175 @@
 \documentclass[11pt]{article}
 \usepackage[margin=1in]{geometry}
 \usepackage[T1]{fontenc}
-\usepackage{lmodern,amsmath,amssymb,booktabs,array,xcolor,listings,%
-hyperref}
-\hypersetup{colorlinks=true,linkcolor=blue!50!black,%
+\usepackage{lmodern,amsmath,amssymb,booktabs,array,xcolor,graphicx,hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue!50!black,
 citecolor=blue!50!black,urlcolor=blue!50!black}
-\lstset{language=R,basicstyle=\ttfamily\footnotesize,breaklines=true,%
-frame=single,columns=fullflexible,showstringspaces=false}
-\title{Extreme Heat Attribution with Nonstationary Extreme Value
-Models:\\A Step-by-Step Tutorial}
+\urlstyle{same}
+\setlength{\emergencystretch}{1em}
+\title{Statistical Inference for Extreme Heat Attribution:\\
+Nonstationary Extreme Value Models and a European Case Study}
 \author{Siyan Wang}
-\date{Working draft: 4 October 2026}
+\date{Working draft: 5 October 2026}
 \begin{document}
 \maketitle
 \begin{abstract}
-Probabilistic extreme event attribution asks how a change in climate
-alters the probability or intensity of a defined class of events.
-Answering this question requires a chain of choices: specifying the
-event, aggregating observations, representing climatic change, fitting
-an extreme value distribution, and comparing risks under different
-climate states. This tutorial explains that chain using European
-extreme heat as a worked example. Starting from daily gridded
-temperatures, we construct regional three-day heat indices and fit a
-generalized extreme value distribution whose location depends on
-global mean surface temperature. We derive probability ratios,
-fractions of attributable risk, and changes in return levels, and
-describe a parametric bootstrap for uncertainty quantification. Short
-R examples connect the notation to an existing analysis workflow. We
-also explain model diagnostics, finite distributional endpoints,
-return periods in a changing climate, and the assumptions required to
-interpret risk changes as probabilities of causation. The objective is
-to equip readers to conduct and interpret an observational extreme
-heat analysis. The case study draws on a World Weather Attribution
-report and accompanying implementation materials.
+Extreme event attribution concerns the change in the probability of a
+specified class of events under a change in climate. For regional heat
+extremes, this problem requires both a statistical description of the
+upper tail and a definition of the climate states being compared. We
+consider an observational approach in which block maxima of regional
+three-day temperatures follow a generalized extreme value distribution
+with a location parameter depending on global mean surface temperature.
+Within this framework, probability ratios, attributable fractions, and
+return-level differences are distinct summaries of the same pair of
+conditional distributions. Their estimation is examined with particular
+attention to finite upper endpoints, uncertainty in tail extrapolation,
+and the distinction between observed and return-period-defined thresholds.
+A European heat case study illustrates how moderate changes in return
+levels can accompany very large changes in exceedance probabilities.
+Results from four daytime and two nighttime temperature products show
+positive intensity changes across all fitted indices, substantial
+cross-product differences in risk ratios, and FAR values approaching
+one for several cooler-climate comparisons. The analysis connects these
+patterns to fitted tail shape, finite endpoints, and bootstrap behavior.
 \end{abstract}
-\noindent\textbf{Keywords:} extreme event attribution; heatwaves;
-generalized extreme value distribution; nonstationarity; bootstrap;
-causal interpretation.
+\noindent\textbf{Keywords:} extreme event attribution; nonstationarity;
+generalized extreme value distribution; heat extremes; risk ratio;
+fraction of attributable risk.
 
 \section{Introduction}
-Extreme weather and climate events are among the most immediate ways
-in which societies experience a changing climate. Heatwaves, heavy
-precipitation, droughts, and other extremes can disrupt livelihoods,
-damage infrastructure, and place pressure on ecosystems and public
-health. Understanding their relationship to climate change is
-therefore relevant to adaptation, preparedness, and the communication
-of climate risk. Extreme heat is a particularly important example:
-prolonged daytime temperatures can produce sustained stress, while
-warm nights reduce opportunities for recovery. Research on extreme
-temperatures has identified anthropogenic contributions to observed
-changes at global and continental scales \cite{kim2016}. These
-findings provide a broad scientific context for asking how warming
-affects the heat events experienced in particular places and periods.
+An unusually severe heatwave raises two related statistical questions:
+how exceptional was the event in the climate in which it occurred, and
+how would its probability have differed under another climate? The first
+concerns the tail of a single distribution. The second requires a
+comparison of distributions and a specification of the change separating
+them. Extreme event attribution brings these questions together by
+expressing the influence of climate change through changes in the
+probability or intensity of a defined event class
+\cite{stott2016,otto2017,naveau2020}.
 
-Following a damaging or unusual event, a recurring question is how
-much climate change contributed to its occurrence or severity. The
-exceptional European summer of 2003 helped establish extreme event
-attribution as a way to address this question scientifically
-\cite{stott2004}. Subsequent research has expanded to a wider range of
-hazards and geographical settings, with increasing attention to
-providing timely information after an event
-\cite{stott2016,otto2017,van2021}. Attribution studies connect the
-long-term evolution of the climate system to events that are locally
-meaningful. They can help explain why historical experience may no
-longer provide a sufficient guide to current hazards, while informing
-discussion of changing risks. Their relevance does not depend on an
-event having a single cause: weather variability and climatic change
-can both contribute to the conditions in which an extreme develops.
+The European summer of 2003 provided an influential early application of
+this approach \cite{stott2004}. Subsequent studies have considered a wider
+range of hazards, spatial scales, and experimental designs. Evidence for
+changes in temperature extremes at larger scales \cite{kim2016} provides
+an important context, but does not by itself determine the attribution of
+a particular regional event. That attribution depends on the temperature
+index, the period and region over which it is defined, and the climate
+comparison. Even when motivated by a single observed episode, the
+statistical target is generally a set of possible realizations rather
+than the probability of reproducing its exact meteorological history.
 
-The demand for attribution information also creates a need for
-accessible explanations of how that information is produced and
-interpreted. Published results often communicate changes in likelihood
-or intensity in a few numbers, but understanding those numbers
-requires following the choices and evidence behind them. Readers need
-to see how observations become an analysis, what a comparison between
-climates means, and how uncertainty affects the conclusions.
-Misunderstandings at these stages can obscure the scope of a result,
-particularly when statements about a physical hazard are interpreted
-as statements about all of its social consequences. The broader WWA
-framework addresses this connection by considering hazard, exposure,
-vulnerability, and communication within an attribution assessment
-\cite{philip2020}.
+The statistical difficulty is especially apparent when an event that is
+rare in the warmer climate lies far into the tail of the cooler-climate
+distribution. A small change in the fitted distribution may then produce
+a large probability ratio. Direct empirical estimation requires enough
+exceedances in both climates, whereas parametric estimation replaces
+that requirement with assumptions about tail behavior. Extreme value
+theory provides a basis for such extrapolation, but uncertainty about the
+tail and the validity of the climate comparison remains central to the
+result \cite{davison2015,naveau2020}. The apparent precision of a fitted
+risk ratio therefore cannot be assessed independently of the data and
+assumptions used to obtain it.
 
-Existing reviews provide substantial foundations for learning the
-subject. Stott et al.\ \cite{stott2016} and Otto \cite{otto2017}
-describe the development and applications of event attribution;
-Shepherd \cite{shepherd2016} explains why different scientific
-questions can lead to complementary approaches. Naveau, Hannart, and
-Ribes \cite{naveau2020} review its statistical foundations, and the
-WWA protocol and associated lessons describe how attribution is
-conducted in practice \cite{philip2020,van2021}. Building on this
-literature, a worked tutorial can help readers connect conceptual
-understanding to the individual steps of an analysis. The educational
-need is for a coherent path through those steps, with enough
-explanation to understand the outputs and enough practical detail to
-apply the ideas.
+A further distinction concerns the source of the comparison. Numerical
+climate experiments can represent different forcing scenarios, while a
+historical observational record contains a transient sequence of climate
+states. A regression of regional extremes on a climate covariate uses
+that sequence to infer conditional distributions. This approach estimates how risk varies with the climate covariate
+through a common statistical model. The present work focuses on those
+observational distributional contrasts and their uncertainty. Its
+climate-state comparisons form part of the broader attribution workflow
+described by Philip et al.\ \cite{philip2020}.
 
-This paper provides that path using European extreme heat as a running
-example drawn from a WWA report \cite{keeping2026}. Its purpose is to
-teach the observational statistical component of extreme heat
-attribution, linking temperature data to estimates of changes in event
-likelihood and intensity. The intended readers are students and
-researchers with basic knowledge of probability, regression, and R who
-are beginning to work with climate extremes. The example provides a
-concrete setting for learning how to organize an analysis and
-communicate its conclusions; the emphasis is on understanding the
-reasoning behind each stage. Detailed definitions, statistical
-methods, and interpretation are developed in their respective
-sections. Together, these sections aim to make attribution
-calculations more accessible and to support careful use of the
-resulting evidence in the study of extreme climate events.
-\section{Defining the event and the attribution question}
-\subsection{Why event definition matters}
-An attribution analysis begins by specifying which events are being
-compared. An observed heatwave can motivate several questions: whether
-a city's hottest day has become more likely, whether a regional hot
-spell has become more intense, or whether a whole season has become
-unusually warm. These questions require different variables, spatial
-domains, durations, and thresholds. Reviews by Stott et al.\
-\cite{stott2016} and Otto \cite{otto2017}, together with the WWA
-protocol \cite{philip2020}, place an explicit event definition at the
-center of an attribution study. Its purpose is to connect the
-statistical analysis to the physical hazard of interest and to make
-the resulting probability statement interpretable.
+This paper develops that observational formulation for European heat
+extremes, using the case-study settings and implementation associated
+with a World Weather Attribution report \cite{keeping2026}. The focus is
+a nonstationary generalized extreme value (GEV) model for annual and June
+maxima of three-day regional temperatures. Rather than surveying the full
+range of attribution methods, we examine how event definition, climate
+dependence, and tail estimation jointly determine its conclusions. The
+basic probability setup is followed by the construction of the data and
+covariates, statistical estimation, and uncertainty quantification. The results compare annual and June extremes across four daytime and
+two nighttime temperature products, reporting probability ratios,
+attributable fractions, intensity changes, and bootstrap intervals.
 
-The definition should specify the temperature variable, geographical
-region, averaging duration, seasonal window, and exceedance criterion.
-These choices determine the event population and should be explained
-before its probability is estimated. Van Oldenborgh et al.\
-\cite{van2021} discuss how choices made during event selection and
-definition can affect attribution results. A definition motivated by
-the phenomenon and suitable observations is therefore preferable to
-selecting a region or time window because it yields the largest
-estimated change. Different definitions can be scientifically useful,
-but their estimates need not answer the same question.
+\section{Basic setup}
+\label{sec:setup}
+Let $X$ denote a scalar summary of a temperature field over a specified
+region and time block. For a threshold $u$, the event of interest is
+$\{X>u\}$. Write $F(x\mid g)$ for its cumulative distribution function at
+climate state $g$, represented here by global mean surface temperature
+(GMST). For a factual state $G_F$ and a cooler comparison state $G_C$,
+define
+\begin{equation}
+p_F(u)=1-F(u\mid G_F),\qquad p_C(u)=1-F(u\mid G_C).
+\label{eq:probabilities}
+\end{equation}
+Both probabilities refer to the same index and threshold. Their
+comparison would change meaning if the event definition changed between
+climates. The probability ratio and fraction of attributable risk are
+\begin{equation}
+\mathrm{RR}(u)=\frac{p_F(u)}{p_C(u)},\qquad
+\mathrm{FAR}(u)=1-\frac{p_C(u)}{p_F(u)},
+\label{eq:rr}
+\end{equation}
+when the denominators are positive. RR is also commonly called the
+probability ratio. These quantities summarize relative changes in risk under the
+specified climate contrast. FAR is reported alongside RR because its
+upper bound of one provides a complementary description of large relative
+changes.
 
-Conditioning is another part of the question. Shepherd
-\cite{shepherd2016} distinguishes risk-based comparisons of an event
-class from analyses conditioned on particular features of an event's
-weather situation. The present tutorial considers regional temperature
-extremes without fixing the circulation of the motivating heatwave.
-Its annual and June indices describe classes of three-day heat events,
-rather than the complete meteorological evolution of one observed
-episode. The following definitions make this target explicit.
-\subsection{Spatial and temporal definitions}
-The example region spans $40$--$60^{\circ}$N and
-$10.5^{\circ}$W--$20^{\circ}$E. Let $T^{\max}_{d,i}$ and
-$T^{\min}_{d,i}$ denote daily maximum and minimum temperature on date
-$d$ at grid cell $i$. We first average temperatures over the selected
-land footprint, then form three-day means, and finally take maxima
-within a time block. The aggregation order is part of the event
-definition.
+The notation describes a climate-state comparison, not a sampling
+scheme. In a numerical experiment, the two distributions might be
+estimated from separate ensembles. In the present analysis they are
+evaluations of a single conditional model fitted to historical pairs
+$(X_t,G_t)$. This construction links the distributions through a common
+parameterization and allows a transient record to inform comparisons at
+fixed climate states. It also makes the results conditional on the form
+of that relationship.
 
-Tx3x is the maximum three-day mean of regional daily maximum
-temperature. Tn3x is the corresponding maximum based on daily minimum
-temperature. Thus Tn3x measures the most persistently warm nights,
-rather than the minimum temperature of the year. Annual and June
-blocks are analyzed separately. An annual maximum describes the
-hottest three-day period anywhere in the year, whereas a June maximum
-describes heat specifically in that month. Each June contributes one
-maximum per year.
+\subsection{Event definition}
+The European case study concerns the region
+$40$--$60^{\circ}$N and $10.5^{\circ}$W--$20^{\circ}$E. Let
+$T^{\max}_{d,i}$ and $T^{\min}_{d,i}$ denote daily maximum and minimum
+temperature on day $d$ at grid cell $i$. The daily temperatures are first
+averaged over the selected land footprint, then averaged over three
+consecutive days, and finally maximized within an annual or June block.
+The resulting indices are denoted Tx3x and Tn3x, respectively. Tn3x thus
+characterizes persistent warm nights through maxima of daily minimum
+temperature.
 
-\subsection{Choosing an event threshold}
-An event can be defined by an observed temperature $x_{\mathrm{obs}}$,
-yielding the exceedance event $X>x_{\mathrm{obs}}$. Alternatively, a
-reference return period $T$ can define a threshold from the fitted
-current-climate distribution. The supplied workflow uses the latter
-construction, with the choices in Table~\ref{tab:events}. These are
-case-study settings, not universal properties of the indices. The
-distinction matters for both estimation and uncertainty.
+This reduction of a temperature field to a scalar variable is part of
+the statistical problem. A maximum of regional averages identifies a
+spatially coherent regional episode, whereas an average of local maxima
+may combine peaks occurring on different dates. Similarly, annual and
+June maxima describe different event populations. Each yields one
+observation per year, but the latter restricts the possible episodes to
+June. As discussed by Naveau et al.\ \cite{naveau2020} and van Oldenborgh
+et al.\ \cite{van2021}, choices of spatial extent and duration affect both
+rarity and the estimated climate signal. A domain selected after
+inspecting an exceptional realization also raises a selection issue
+that ordinary parameter intervals do not resolve.
+
+The threshold can be supplied by an observed value $x_{\mathrm{obs}}$ or
+specified indirectly through a factual return period $T>1$. In the
+second formulation,
+\begin{equation}
+x_F(T)=F^{-1}(1-1/T\mid G_F),\qquad p_F\{x_F(T)\}=1/T.
+\label{eq:threshold}
+\end{equation}
+The implementation uses the return periods in Table~\ref{tab:events}.
+They define the reference event classes used in this analysis; they are
+not intrinsic characteristics of Tx3x or Tn3x. With an observed
+threshold, both probabilities in Equation~\eqref{eq:probabilities} must
+instead be estimated. The distinction affects the uncertainty analysis
+because a fitted quantile changes when the fitted distribution changes,
+whereas a specified observed threshold remains fixed.
+
 \begin{table}[htbp]
 \centering
-\caption{Current-climate return periods used to define thresholds.
-June return periods refer to one June maximum per year.}
+\caption{Factual return periods defining the case-study thresholds.
+June values refer to one June maximum per year.}
 \label{tab:events}
 \begin{tabular}{lcc}\toprule
 Index & Annual & June\\\midrule
@@ -181,524 +178,737 @@ Tn3x & 20 years & 100 years\\\bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Why compare with 1976 and 2003?}
-The comparison years are chosen as recognizable historical reference
-points for European heat, following the case-study report
-\cite{keeping2026}. The year 1976 was approximately fifty years before
-the 2026 event and is remembered for a major UK heatwave characterized
-by persistent high temperatures. The year 2003 marks a major European
-heatwave early in this century and an influential event in the
-development of attribution research \cite{stott2004}. These examples
-place climate change within living memory: readers can ask how the
-likelihood and intensity of today's heat differ from the climates
-associated with familiar past heatwaves.
-
-The years motivate the comparison; their actual weather does not enter
-as a pair of temperature observations to be subtracted. The report
-represents the 2003-like and 1976-like states by climates with GMST
-respectively $0.6$ and $1.1\ ^{\circ}\mathrm{C}$ below the current
-state \cite{keeping2026}. We adopt these specified contrasts rather
-than estimating them anew from the two historical years in this
-tutorial.
-
-Write $G_F$ for current global mean surface temperature (GMST) and
-$G_C$ for a cooler comparison state. The example uses
+\subsection{Climate comparisons and conditioning}
+The case study compares the factual climate with states characterized
+by GMST decrements of $0.6$ and $1.1\ ^{\circ}\mathrm{C}$:
 \begin{equation}
-G_C=G_F-\Delta G,\qquad\Delta G\in\{0.6,1.1\}\ ^{\circ}\mathrm{C}.
+G_C=G_F-\Delta G,\qquad
+\Delta G\in\{0.6,1.1\}\ ^{\circ}\mathrm{C}.
 \label{eq:climate}
 \end{equation}
-These decrements represent 2003-like and 1976-like climates. They do
-not require the weather of those historical years to recur and do not
-define a world with all anthropogenic forcing removed. Here,
-``counterfactual'' denotes the cooler state in the specified
-comparison. The resulting estimates describe that climate contrast
-under the fitted model.
+Following the motivating report \cite{keeping2026}, these are described
+as 2003-like and 1976-like climates. The years identify historical
+reference states; their realized weather is not used as a pair of
+observations to be subtracted. Nor does either decrement represent the
+removal of all anthropogenic forcing. Where the term counterfactual is
+used below, it refers to the specified cooler comparison within the
+fitted model.
 
-\section{Preparing temperature data and climate covariates}
-\subsection{Temperature products and metadata}
-CPC and E-OBS are principally station-based gridded analyses, Berkeley
-Earth is an observation-based reconstruction, and ERA5 combines
-observations with a numerical weather model through reanalysis. Their
-constructions demonstrate how data provenance enters the workflow.
-Products can share observational inputs, so their errors should not
-automatically be treated as independent.
+The analysis is conditional on GMST but does not hold the circulation
+of the motivating heatwave fixed. Consequently, its event probabilities
+refer to regional heat episodes across the weather variability
+represented by the model. A comparison conditioned on a particular
+circulation trajectory would answer a different question
+\cite{shepherd2016}. This distinction matters because a change in the
+frequency of circulation states and a change in temperature within a
+circulation state can both contribute to a change in heat risk.
+
+\section{Temperature data and climate covariates}
+\label{sec:data}
+\subsection{Observational products and spatial support}
+The implementation draws on four gridded temperature products
+(Table~\ref{tab:data}). CPC and E-OBS are principally station-based
+gridded analyses, Berkeley Earth provides an observation-based
+reconstruction, and ERA5 is a reanalysis combining observations with a
+numerical weather model. These products differ in temporal coverage,
+spatial representation, and the way observations enter the analysis.
+They may also share observational inputs. Agreement across products is
+therefore informative about sensitivity to data construction, but does
+not provide independent replication in a simple sampling sense.
+
 \begin{table}[htbp]
 \centering
-\caption{Historical fitting periods in the saved daytime analyses. All
-four products provide Tx3x in the implementation; CPC and E-OBS also
-provide Tn3x.}
+\caption{Historical fitting periods in the existing daytime analyses.
+All four products provide Tx3x; CPC and E-OBS also provide Tn3x.}
 \label{tab:data}
-\begin{tabular}{lp{5cm}l}\toprule
+\begin{tabular}{l>{\raggedright\arraybackslash}p{4.4cm}l}\toprule
 Product & Construction & Tx3x fitting years\\\midrule
 ERA5 & Reanalysis & 1950--2025\\
-CPC & Station-based gridded analysis & 1979--2025\\
-E-OBS v33e & European gridded observations & 1920--2025\\
+CPC & Gridded station observations & 1979--2025\\
+E-OBS v33e & Gridded station observations & 1920--2025\\
 Berkeley Earth & Gridded reconstruction & 1897--2023 annual;\\
  & & 1897--2024 June\\\bottomrule
 \end{tabular}
 \end{table}
 
-Before averaging, inspect variable names, units, dimensions,
-coordinates, time origins, and calendars. The ERA5 input used here
-contains daily maximum temperature in kelvin; subtracting $273.15$
-converts it to degrees Celsius. A time coordinate expressed in days
-cannot be read as hours. Missing calendar dates should be inserted
-explicitly with missing temperatures, ensuring that adjacent rows
-represent adjacent days.
-
-\subsection{Regional averaging and missing values}
-For a regular longitude--latitude grid, cell area is proportional to
-the cosine of latitude. Let $w_i=\cos(\phi_i)$ within a fixed
-footprint and zero outside it. If $M_{d,i}$ indicates a valid
-temperature, the regional daily temperature and coverage fraction are
+For a regular longitude--latitude grid, area weighting is represented
+by $w_i=\cos(\phi_i)$ within the chosen footprint and zero outside it.
+With $M_{d,i}$ indicating an available observation, the daily regional
+mean and its spatial coverage are
 \begin{equation}
-\overline T_d=\frac{\sum_i w_iM_{d,i}T_{d,i}}{\sum_i
-w_iM_{d,i}},\qquad
+\overline T_d=
+\frac{\sum_i w_iM_{d,i}T_{d,i}}{\sum_i w_iM_{d,i}},\qquad
 c_d=\frac{\sum_i w_iM_{d,i}}{\sum_i w_i}.
+\label{eq:spatial}
 \end{equation}
-Retain a mean only when $c_d\geq0.95$. Use actual cell areas on
-irregular grids. A fixed footprint reduces changes in spatial support,
-although missing cells can still change the composition of a daily
-average.
+Actual cell areas replace cosine weights on irregular grids. A regional
+mean is retained when $c_d\geq0.95$. The footprint is fixed across dates,
+although the subset contributing to a retained mean can still vary with
+missingness. For CPC, E-OBS, and Berkeley Earth, the implementation
+constructs this footprint from cells available on at least 95\% of input
+dates. ERA5 uses a mapped E-OBS footprint as an approximate land mask.
+These rules define the effective spatial support of the index and are
+therefore relevant to comparisons among products.
 
-For CPC, E-OBS, and Berkeley Earth, the implementation selects cells
-with finite values on at least 95\% of input dates. This
-availability-based footprint should be inspected spatially. For ERA5,
-a saved E-OBS footprint is mapped to the grid as an approximate land
-mask. The mask and its mapping are analysis choices that should be
-documented.
-
-\subsection{Three-day means and block maxima}
-For a regional daily series, define
+\subsection{Temporal aggregation}
+For either daily temperature variable, the regional three-day mean and
+block maximum are
 \begin{equation}
-A_d=\frac{\overline T_{d-2}+\overline T_{d-1}+\overline T_d}{3},\qquad
-X_y=\max_{d\in\mathcal D_y}A_d,
+A_d=\frac{\overline T_{d-2}+\overline T_{d-1}+\overline T_d}{3},
+\qquad X_t=\max_{d\in\mathcal D_t}A_d,
 \label{eq:index}
 \end{equation}
-where $\mathcal D_y$ includes only endpoints whose entire windows lie
-within the selected block. The first June endpoint is 3 June, and
-annual windows do not cross years. A window with a missing component
-is omitted. A block must have at least 95\% valid regional daily
-values. Missing observations during the hottest spell may nevertheless
-bias its maximum downward.
+where $\mathcal D_t$ contains only endpoints of windows lying entirely
+within the selected block. Thus June windows begin with 1--3 June,
+and annual windows do not span two calendar years. Dates absent from
+the input must be represented explicitly as missing; adjacency in a
+data array alone does not establish that observations are consecutive.
+Temperature units and calendar conventions likewise enter the definition
+of the resulting series.
 
-The following function illustrates construction for one complete
-block, after selecting its dates. It applies to annual or June data:
-%\begin{lstlisting}
-%three_day_max <- function(date, temperature, expected_days) {
-%  stopifnot(length(date) == length(temperature))
-%  if (length(date) != expected_days ||
-%      anyDuplicated(date) || any(diff(date) != 1)) return(NA_real_)
-%  if (mean(is.finite(temperature)) < 0.95) return(NA_real_)
-%  a <- vapply(3:length(temperature), function(k) {
-%    v <- temperature[(k - 2L):k]
-%    if (all(is.finite(v))) mean(v) else NA_real_
-%  }, numeric(1))
-%  if (any(is.finite(a))) max(a, na.rm = TRUE) else NA_real_
-%}
-%# Select one calendar year or one June before calling this function.
-%# expected_days is 365/366 for a year and 30 for June.
-%\end{lstlisting}
-Spatial averaging precedes this computation. Averaging cell-wise
-maxima instead would combine local peaks that need not occur
-simultaneously and would define a different event.
+A three-day window is omitted if any of its components is missing, and
+a block is retained only if at least 95\% of its regional daily values
+are available. Such a coverage rule limits data loss but does not make
+missingness ignorable for extremes. Missing a short hot spell can lower
+the recorded block maximum even when overall coverage is high. This
+source of observational uncertainty is distinct from the sampling
+uncertainty of a GEV model fitted to the retained maxima.
 
-\subsection{GMST preparation}
-The example uses NASA GISTEMP monthly global land--ocean temperature
-anomalies relative to 1951--1980. For twelve complete months,
-$g_y=12^{-1}\sum_{m=1}^{12}g_{y,m}$. The covariate is a four-year
-average:
+\subsection{Representation of the climate state}
+The climate covariate is constructed from NASA GISTEMP monthly global
+land--ocean temperature anomalies relative to 1951--1980. Let $g_t$ be
+the mean of twelve complete monthly values in year $t$. The implementation
+uses the smoothed series
 \begin{equation}
 G_t=\frac{g_{t-2}+g_{t-1}+g_t+g_{t+1}}{4}.
+\label{eq:gmst}
 \end{equation}
-This retrospective smoothing assigns the average to the third year and
-requires next year's value. It is not automatically available in real
-time. For 2026, the implementation extrapolates missing endpoint years
-using a trend fitted over 2011--2025, giving $G_F\approx1.2431\
-^{\circ}\mathrm{C}$. This is an implementation assumption. The value
-is a smoothed anomaly relative to the GISTEMP baseline, not warming
-relative to preindustrial conditions. Historical fitting excludes
-2026, and endpoint alternatives should be explored when the current
-covariate is estimated.
+This covariate summarizes variation on a longer timescale than the
+individual regional heat episode. Its use as a predictor does not,
+however, imply that all variability shared by regional extremes and
+GMST is attributable to one external forcing.
 
-\section{Fitting a nonstationary GEV model}
-\subsection{Distribution and climate dependence}
-The GEV is a standard asymptotic model for suitably normalized block
-maxima \cite{coles2001,davison2015}:
+Equation~\eqref{eq:gmst} requires the following year's anomaly and is
+therefore a retrospective smoother. At the endpoint, the implementation
+extrapolates unavailable annual values using a trend fitted over
+2011--2025, obtaining $G_F\approx1.2431\ ^{\circ}\mathrm{C}$ for 2026.
+This number is an estimated smoothed anomaly relative to the GISTEMP
+baseline, rather than a temperature change relative to preindustrial
+conditions. Historical fitting excludes 2026. Because the factual
+distribution is evaluated at an estimated endpoint covariate, alternative
+smoothing and extrapolation choices form part of the sensitivity analysis.
+
+\section{Nonstationary extreme value modeling}
+\label{sec:model}
+\subsection{Tail modeling and block maxima}
+For a stationary sample, an exceedance probability can be estimated by
+the fraction of observations above a threshold. Its usefulness depends
+on the number of exceedances: a short series provides little direct
+information about probabilities much smaller than the reciprocal of
+its length. In the present setting, observations also arise under
+different climate states, so pooling their exceedances would not estimate
+a fixed-climate probability. Parametric modeling addresses these two
+issues by describing tail behavior and its dependence on the covariate.
+
+Extreme value theory motivates the GEV family as a limiting model for
+suitably normalized block maxima \cite{coles2001,davison2015}. Its
+cumulative distribution function is
 \begin{equation}
 F(x;\mu,\sigma,\xi)=
 \exp\left\{-\left[1+\xi\frac{x-\mu}{\sigma}\right]^{-1/\xi}\right\},
 \quad \sigma>0,\quad 1+\xi(x-\mu)/\sigma>0.
+\label{eq:gev}
 \end{equation}
-At $\xi=0$, its limit is the Gumbel distribution,
-$F(x)=\exp\{-\exp[-(x-\mu)/\sigma]\}$. Location $\mu$ shifts the
-distribution, scale $\sigma$ determines spread, and shape $\xi$
-controls tail behavior. Negative shape gives upper endpoint
-$\mu-\sigma/\xi$. A finite annual or monthly maximum is not guaranteed
-to follow this asymptotic distribution exactly.
+The limit at $\xi=0$ is the Gumbel distribution,
+$F(x)=\exp\{-\exp[-(x-\mu)/\sigma]\}$. The location and scale parameters
+control position and spread, while the shape parameter determines the
+upper-tail form. In particular, $\xi<0$ implies a finite upper endpoint
+$\mu-\sigma/\xi$. The limiting argument motivates a family of models;
+it does not guarantee that a finite annual or June maximum follows that
+family exactly. The adequacy of the approximation remains empirical.
 
-Fit one model across historical years:
+\subsection{Climate dependence and likelihood}
+We represent the historical sequence by
 \begin{equation}
-X_t\sim\mathrm{GEV}(\mu_t,\sigma,\xi),\qquad
+X_t\mid G_t\sim\mathrm{GEV}(\mu_t,\sigma,\xi),\qquad
 \mu_t=\mu_0+\alpha(G_t-\overline G),
 \label{eq:model}
 \end{equation}
-where $\overline G$ is the fitting-period mean. The intercept is the
-location at that reference climate. Parameter $\alpha$ measures
-location change in degrees Celsius per degree of GMST change.
-Centering improves parameterization without changing climate
-contrasts.
+where $\overline G$ is the mean covariate over the fitting period.
+Centering makes $\mu_0$ the location at the reference climate and leaves
+contrasts between climate states unchanged. The slope $\alpha$ is
+measured in degrees of regional extreme temperature per degree of GMST.
+Annual and June indices, and daytime and nighttime temperatures, are
+modeled separately.
 
-Constant scale and shape make this a location-shift model: every
-quantile moves by the same amount. That simplicity is useful, but
-assumes variability and tail shape remain unchanged. Annual, June,
-daytime, and nighttime indices are fitted separately. Additional
-covariates or changing scale should be motivated by physical reasoning
-and diagnostics.
+Constant scale and shape impose a location shift: all quantiles respond
+to GMST by the same amount. This restriction gives a parsimonious
+representation for a limited record, but excludes changes in variability
+or tail shape. In particular, a conclusion that intensity change is
+independent of return period follows from this assumption rather than
+constituting separate evidence for it. A model with changing scale would
+allow a different response at different quantiles, at the cost of
+estimating additional parameters from relatively few maxima.
 
-\subsection{Estimation}
-Assuming conditionally independent block maxima, maximize
-$\ell(\theta)=\sum_t\log f(X_t;\mu_t,\sigma,\xi)$, with
-$\theta=(\mu_0,\alpha,\sigma,\xi)$. Each observation must lie in its
-year-specific support. The supplied \texttt{fit\_gev} helper optimizes
-log scale, uses multiple starting shapes, and selects the best
-converged likelihood. It does not force a positive trend. The
-implementation stops for $\xi\leq-0.5$, where standard likelihood
-regularity is problematic; this is an estimation rule, not a physical
-law.
-%\begin{lstlisting}
-%# Run from the root of the supplied analysis project.
-%source(file.path("helpers", "gev.R"))
-%# x, g, year: aligned vectors of the selected index, GMST and year.
-%# Prepare these with the data-specific run script before this step.
-%keep <- is.finite(x) & is.finite(g) & year <= 2025L
-%fit <- fit_gev(x[keep], g[keep])
-%fit[c("mu", "alpha", "sigma", "xi", "g0")]
-%\end{lstlisting}
-The vectors in this snippet are prepared inputs, not raw NetCDF
-arrays. Check year alignment, units, completeness, and the chosen
-annual or June index before fitting.
-
-\subsection{Diagnostics}
-The probability integral transform is $u_t=F_t(X_t)$; normal scores
-are $z_t=\Phi^{-1}(u_t)$. A correct continuous conditional model
-implies approximately uniform $u_t$ and standard normal $z_t$. Q--Q
-plots assess distributional agreement. Residual plots against year and
-GMST assess remaining trends; absolute residuals can reveal changes in
-spread. Autocorrelation checks assess the independence assumption.
-
-Because the model is estimated from the same observations, diagnostic
-reference distributions should account for fitting. Simulate and refit
-the model to obtain bootstrap envelopes or discrepancy comparisons.
-Read exploratory diagnostics together rather than treating them as
-independent confirmations. The supplied ERA5 annual diagnostic
-exercise identifies departures requiring further investigation,
-illustrating the need to check a convenient model before interpreting
-its tails. Even satisfactory central-distribution diagnostics cannot
-validate probabilities at return periods far beyond the observation
-record.
-
-\section{Estimating changes in probability and intensity}
-\subsection{Return levels at a specified climate state}
-Let $F_F$ and $F_C$ be distributions evaluated at $G_F$ and $G_C$.
-Define
+Under conditional independence across blocks, inference is based on
 \begin{equation}
-x_F(T)=F_F^{-1}(1-1/T).
-\label{eq:threshold}
+\ell(\theta)=\sum_t\log f(X_t;\mu_t,\sigma,\xi),
+\qquad \theta=(\mu_0,\alpha,\sigma,\xi),
+\label{eq:likelihood}
 \end{equation}
-For $\xi\neq0$, the return level is
+with all observations constrained to their year-specific support. The
+existing implementation optimizes log scale, uses multiple starting
+values for shape, and retains the best converged likelihood. The trend
+coefficient is not constrained to be positive. Fits with $\xi\leq-0.5$
+are rejected because standard likelihood regularity is problematic in
+that range. This restriction is an estimation choice and should be
+reported when interpreting fitted endpoints or failed bootstrap samples.
+
+\subsection{Assessment of the fitted distribution}
+The probability integral transform provides a common diagnostic scale:
 \begin{equation}
-x_F(T)=\mu_F+\frac{\sigma}{\xi}\{[-\log(1-1/T)]^{-\xi}-1\}.
+u_t=F(X_t;\widehat\mu_t,\widehat\sigma,\widehat\xi),
+\qquad z_t=\Phi^{-1}(u_t).
 \end{equation}
-For $\xi=0$, it becomes $\mu_F-\sigma\log[-\log(1-1/T)]$. A return
-period is the reciprocal of the exceedance probability for one block
-at a specified climate state. In a changing climate, a ``25-year
-event'' does not have a constant probability for the next 25 years and
-does not occur on a regular schedule.
+With known parameters and a correct continuous model, the transforms
+would be uniform and standard normal, respectively. Estimated parameters
+alter their sampling behavior. Quantile plots and residual patterns can
+nevertheless reveal departures in distributional shape, remaining
+covariate dependence, or changing spread; serial dependence challenges
+the factorization in Equation~\eqref{eq:likelihood}. Simulating and
+refitting the model allows diagnostic envelopes to reflect estimation.
 
-\subsection{Probability ratio and attributable fraction}
-For a probability comparison, hold temperature fixed:
+Diagnostics are especially consequential for attribution because the
+cooler-climate probability may be far smaller than probabilities directly
+represented in the data. A satisfactory fit over the observed range is
+necessary evidence for the model, but provides limited validation of
+such remote extrapolation. The existing ERA5 annual diagnostic exercise
+indicates departures requiring further investigation. Its estimates, together with the other provisional product results,
+are therefore interpreted conditional on the fitted model and the
+remaining diagnostic limitations.
+
+\section{Probability and intensity contrasts}
+\label{sec:contrasts}
+\subsection{Return levels and climate-specific risk}
+Evaluating Equation~\eqref{eq:model} at $G_F$ and $G_C$ gives locations
+$\mu_F$ and $\mu_C$. For $\xi\neq0$, the return level at either state is
 \begin{equation}
-p_F=1-F_F(x_F)=1/T,\quad p_C=1-F_C(x_F),\quad
-\mathrm{RR}=p_F/p_C,\quad\mathrm{FAR}=1-p_C/p_F.
-\label{eq:rr}
+x_j(T)=\mu_j+\frac{\sigma}{\xi}
+\left\{[-\log(1-1/T)]^{-\xi}-1\right\},\qquad j\in\{F,C\}.
+\label{eq:return}
 \end{equation}
-Probability ratio (PR) and risk ratio (RR) mean the same quantity
-here. If $p_F=0.04$ and $p_C=0.01$, RR is 4 and FAR is 0.75. The event
-is four times as likely in the factual climate. FAR describes a
-fraction of factual risk associated with the modeled contrast, not a
-fraction of the event's temperature caused by warming.
+At $\xi=0$, it is
+$x_j(T)=\mu_j-\sigma\log[-\log(1-1/T)]$. The return period is the
+reciprocal of the one-block exceedance probability at the stated
+climate. Under nonstationarity it is not a forecast of a constant
+waiting time over future years, since those years may have different
+exceedance probabilities.
 
-An observed-event analysis substitutes $x_{\mathrm{obs}}$ for $x_F(T)$
-and estimates both probabilities. It should not force $p_F$ to equal a
-prescribed reciprocal return period.
-
-\subsection{Intensity change}
-For an intensity comparison, hold probability fixed:
+For the return-period-defined event, both distributions are evaluated at
+the same factual threshold $x_F(T)$:
 \begin{equation}
-\Delta I(T)=F_F^{-1}(1-1/T)-F_C^{-1}(1-1/T)
+p_F=1/T,\qquad p_C=1-F\{x_F(T);\mu_C,\sigma,\xi\}.
+\end{equation}
+If $p_F=0.04$ and $p_C=0.01$, the risk ratio is four and FAR is 0.75.
+The latter expresses a relative difference in event probabilities, not
+a fraction of temperature. For an observed event, replacing $x_F(T)$
+with $x_{\mathrm{obs}}$ changes the estimand: the factual probability is
+then estimated rather than fixed by construction.
+
+\subsection{Intensity at a common probability}
+A complementary comparison fixes the exceedance probability and
+compares the associated temperatures. Under the location-shift model,
+\begin{equation}
+\Delta I(T)=x_F(T)-x_C(T)=\mu_F-\mu_C
 =\alpha(G_F-G_C)=\alpha\Delta G.
 \label{eq:intensity}
 \end{equation}
-The final equality follows because scale and shape cancel under a
-location shift. Independence from $T$ is therefore a model property;
-it need not hold when scale or shape depends on climate. On a
-return-period-versus-temperature plot, intensity change is the
-vertical distance at a common return period. Probability change
-follows a common temperature horizontally to the two curves.
+The scale and shape terms cancel, so the intensity contrast is constant
+across return periods. Risk ratios generally retain a dependence on the
+threshold because the same horizontal shift can have different effects
+at different positions in the tail. Thus a moderate and relatively
+stable intensity contrast can coexist with a very large and uncertain
+risk ratio. They answer different questions and need not have similar
+statistical precision.
 
-\subsection{Finite endpoints and numerical stability}
-If $\xi<0$ and the factual threshold reaches or exceeds the cooler
-distribution's upper endpoint, the model gives $p_C=0$ and infinite
-RR. This reflects fitted support, not proof of physical impossibility.
-Interpret it alongside shape uncertainty and record length.
+\subsection{Support and extreme probability ratios}
+For negative shape, the cooler-climate upper endpoint is
+$x_C^+=\mu_C-\sigma/\xi$. If $x_F(T)\geq x_C^+$, the fitted model assigns
+zero probability to exceedance in that climate and hence an infinite
+risk ratio. This is a consequence of the estimated support, not direct
+evidence that the event is physically impossible. Sampling uncertainty
+in $\xi$, model misspecification, and the climate-dependence assumption
+all affect this conclusion.
 
-Very small survival probabilities should be evaluated in logarithmic
-form. Direct subtraction $1-F(x)$ loses precision near one. The helper
-calculates $\log p_C$ and $\log\mathrm{RR}=-\log T-\log p_C$.
-Replacing zero with an arbitrary small number would impose an
-artificial RR bound.
+Even within the fitted support, a very small $p_C$ makes the ratio
+sensitive to small changes in tail parameters. This behavior is
+substantive, but can be compounded by numerical cancellation if survival
+probabilities are obtained by subtracting a cumulative probability close
+to one. The implementation evaluates the survival probability in
+logarithmic form and uses
+$\log\mathrm{RR}=-\log T-\log p_C$. A zero induced by fitted support
+must be distinguished from numerical underflow; replacing either by an
+arbitrary small constant would impose an artificial upper bound on RR.
 
-\section{Quantifying uncertainty}
-\subsection{Parametric bootstrap}
-Statistical uncertainty in attribution, especially when comparison
-probabilities are small, is examined by Paciorek et al.\
-\cite{paciorek2018}. Their comparisons identify advantages of
-alternative frequentist procedures over commonly used bootstrap
-methods in some settings. We introduce bootstrap as an accessible
-conditional procedure, rather than a universally preferred method.
+\section{Uncertainty quantification}
+\label{sec:uncertainty}
+\subsection{Conditional parameter uncertainty}
+Because both climate distributions depend on the same fitted parameters,
+the uncertainty of their contrast must preserve this dependence. The
+implementation uses a parametric bootstrap conditional on the observed
+years and GMST covariates. For replicate $b$, it simulates
+\begin{equation}
+X_t^{(b)}\sim
+\mathrm{GEV}(\widehat\mu_t,\widehat\sigma,\widehat\xi),
+\end{equation}
+refits the model, and computes the attribution quantities from the
+replicate parameters. In a return-period-defined analysis, the factual
+threshold $x_F^{(b)}(T)$ is recomputed in each replicate. For a specified
+observed threshold, $x_{\mathrm{obs}}$ is held fixed. Using one convention
+for the point estimate and the other for resampling would quantify
+uncertainty for a different target.
 
-A parametric bootstrap propagates uncertainty from estimating GEV
-parameters. After fitting the historical pairs $(X_t,G_t)$, repeat
-four steps:
-\begin{enumerate}
-\item Hold years and GMST fixed; simulate one maximum per year from
-its fitted distribution.
-\item Refit the model with the same estimation procedure.
-\item Evaluate factual and cooler distributions from that refit.
-\item Recompute the factual return-period threshold and calculate RR,
-FAR, and intensity change.
-\end{enumerate}
-Use empirical 2.5th and 97.5th percentiles for nominal 95\% percentile
-intervals. For an observed-threshold analysis, hold $x_{\mathrm{obs}}$
-fixed instead. This choice determines the estimand whose uncertainty
-is represented.
-%\begin{lstlisting}
-%# qgev_local() is defined in helpers/gev.R.
-%set.seed(20261004)
-%mu_t <- fit$mu + fit$alpha * (g[keep] - fit$g0)
-%simulate_maxima <- function() {
-%  vapply(seq_along(mu_t), function(i)
-%    qgev_local(runif(1), mu_t[i], fit$sigma, fit$xi),
-%    numeric(1))
-%}
-%# Repeat simulation, refitting and attribution; log failed fits.
-%\end{lstlisting}
-Record requested and successful replicates, the seed, and failure
-reasons. Many failures can make successful replicates an
-unrepresentative subset. Infinite ratios should be tracked rather than
-removed. The example tables use 200 requested replicates, a modest
-computational setting; interval endpoints should be checked for Monte
-Carlo stability. Pointwise return-level bands do not cover an entire
-curve simultaneously.
+Empirical 2.5th and 97.5th percentiles give nominal 95\% percentile
+intervals under this procedure. Their finite-sample performance is not
+guaranteed, particularly when a risk ratio is influenced by a support
+boundary. Paciorek et al.\ \cite{paciorek2018} compare interval methods
+for attribution and show that commonly used bootstrap methods can be
+outperformed in some settings. Their findings motivate care in choosing
+and assessing an interval procedure, rather than a general claim that
+bootstrap intervals have reliable coverage for all extreme-value fits.
 
-\subsection{Conditional uncertainty and sensitivity}
-This bootstrap conditions on product, footprint, event definition,
-GMST, and model specification. It does not automatically include
-measurement error, climate-covariate uncertainty, mask uncertainty, or
-misspecification. A narrow parameter interval need not imply a
-well-determined attribution statement.
+The existing example uses 200 requested replicates, which is a modest
+basis for estimating tail percentiles. Monte Carlo variation, failed
+fits, and infinite ratios need to be distinguished from sampling
+uncertainty. In particular, deleting infinite ratios changes the
+estimated uncertainty distribution, while retaining only successful
+fits may condition on a nonrepresentative subset of simulated samples.
+Reported intervals should therefore be accompanied by the number and
+nature of failed fits and an assessment of endpoint stability. Similarly,
+pointwise return-level intervals do not constitute a simultaneous band
+for an entire curve.
 
-Useful sensitivity exercises change the fitting period, compare
-products over common years, vary GMST endpoint treatment, or evaluate
-alternative masks. A model with changing scale can be considered when
-residual behavior motivates it. Such exercises probe assumptions,
-which cannot be resolved merely by increasing the bootstrap count.
+\subsection{Other sources of uncertainty}
+The bootstrap varies the fitted GEV parameters while holding the product,
+footprint, event definition, covariates, and model family fixed. It does
+not propagate the full uncertainty associated with constructing those
+inputs. As emphasized in broader statistical treatments of attribution
+\cite{naveau2020}, observational error, internal variability, finite
+sampling, and structural model error are related but distinct sources.
+Increasing the number of bootstrap replicates reduces simulation error;
+it does not resolve a misspecified tail model or an uncertain climate
+comparison.
 
-\section{A worked example: European extreme heat}
-\subsection{Following the workflow}
-The project separates preparation from distributional calculations.
-Its main components are \texttt{config/paths.R},
-\texttt{helpers/workflow.R}, and \texttt{helpers/gev.R}. Prepare
-shared GMST with \texttt{prepare\_gmst.R}, then use a data-specific
-script such as \texttt{Code/run\_era5\_tx.R}. Intermediate objects
-allow inspection of dates, weights, coverage, and retained years.
-Local absolute paths in script headers must be adapted to the reader's
-location.
+In the European application, sensitivity to the fitting period can be
+separated partly from sensitivity to the temperature product by also
+comparing products over common years. Alternative masks probe the
+spatial definition, and alternative endpoint treatments probe the GMST
+representation. Allowing scale to depend on climate examines a central
+restriction behind Equation~\eqref{eq:intensity}. These comparisons
+provide evidence about robustness, although a collection of sensitivity
+results is not itself a calibrated probability distribution over model
+uncertainty.
 
-The saved ERA5 annual fit contains 76 maxima from 1950--2025. The
-factual distribution is evaluated at the estimated 2026 covariate. At
-$T=25$, it gives $x_F\approx30.90\ ^{\circ}\mathrm{C}$ and $p_F=0.04$.
-This is a fitted return level, not an assertion that an observed event
-had exactly this temperature.
+\section{Results: European extreme heat}
+\label{sec:example}
+\subsection{Data coverage and fitted distributions}
+The results comprise 12 fitted distributions and 24 climate contrasts:
+annual and June Tx3x for ERA5, CPC, Berkeley Earth, and E-OBS, and annual
+and June Tn3x for CPC and E-OBS. They are drawn from the saved
+\path{cpc_rr} analysis, whose outputs are labeled provisional because
+the data versions and implementation choices are not identical to those
+of the motivating report. The present comparisons retain each product's
+available fitting period rather than refitting to a common period.
+Consequently, differences among estimates reflect both product
+construction and record coverage. No pooled estimate is calculated.
 
-\subsection{Interpreting the output}
-Table~\ref{tab:example} presents the saved point estimates. For the
-2003-like state, $p_C\approx0.001077$, giving RR approximately 37.1
-and intensity change approximately $1.70\ ^{\circ}\mathrm{C}$.
-Dividing this change by $0.6$ gives a location slope of about 2.83
-degrees of regional extreme warming per degree of GMST change.
+Table~\ref{tab:fits} gives the sample sizes, thresholds, and fitted
+parameters. CPC contributes 47 maxima per block, ERA5 contributes 76,
+and E-OBS contributes 106. Berkeley Earth contributes 127 annual and 128
+June maxima. All 12 fitted location slopes are positive. For daytime
+extremes, annual slopes range from 1.90 to 3.67 degrees of regional
+temperature per degree of GMST; June slopes range from 2.22 to 3.94.
+The nighttime slopes are smaller within each of the two products, and
+June slopes exceed annual slopes for both temperature indices in every
+product where the comparison is available.
+
+The tail parameters show a different pattern. CPC annual Tx3x has
+$\widehat\xi=0.193$, whereas the other 11 fitted distributions have
+negative shape. This difference is important for comparing risk ratios:
+a large location shift need not give the largest relative risk increase
+when the fitted distributions have different tail behavior. Each
+product also defines its own factual quantile threshold. The annual
+Tx3x thresholds range from $30.90$ to $33.18\ ^{\circ}\mathrm{C}$;
+cross-product comparisons therefore concern equal factual return periods,
+not a common absolute temperature threshold.
+
 \begin{table}[htbp]
-\centering
-\caption{Illustrative saved ERA5 annual Tx3x outputs at a fitted
-current-climate 25-year threshold of $30.90\ ^{\circ}\mathrm{C}$.
-These conditional working estimates demonstrate calculation and
-interpretation.}
-\label{tab:example}
-\begin{tabular}{lrrrr}\toprule
-Comparison & $\Delta G$ ($^{\circ}$C) & $p_C$ & RR & $\Delta I$
-($^{\circ}$C)\\\midrule
-2003-like & 0.6 & $1.077\times10^{-3}$ & 37.1 & 1.70\\
-1976-like & 1.1 & $9.945\times10^{-7}$ & $4.02\times10^4$ &
-3.11\\\bottomrule
-\end{tabular}
+\centering\small
+\caption{Fitted GEV parameters and factual thresholds. The slope $\widehat\alpha$ is in degrees Celsius per degree of GMST, while $\widehat\sigma$ and $x_F$ are in degrees Celsius. $T$ is in years.}
+\label{tab:fits}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{lllrrrrrr}\toprule
+Product & Index & Block & $n$ & $T$ & $x_F$ & $\widehat\alpha$ & $\widehat\sigma$ & $\widehat\xi$\\\midrule
+ERA5 & Tx3x & Annual & 76 & 25 & 30.90 & 2.83 & 1.05 & -0.165\\
+ERA5 & Tx3x & June & 76 & 100 & 29.68 & 2.93 & 1.32 & -0.225\\
+CPC & Tx3x & Annual & 47 & 25 & 33.18 & 3.67 & 0.78 & 0.193\\
+CPC & Tx3x & June & 47 & 100 & 30.68 & 3.94 & 1.10 & -0.243\\
+Berkeley Earth & Tx3x & Annual & 127 & 25 & 31.92 & 1.90 & 1.08 & -0.178\\
+Berkeley Earth & Tx3x & June & 128 & 100 & 31.20 & 2.22 & 1.27 & -0.208\\
+E-OBS & Tx3x & Annual & 106 & 25 & 32.05 & 2.40 & 1.06 & -0.169\\
+E-OBS & Tx3x & June & 106 & 100 & 31.60 & 2.97 & 1.36 & -0.181\\
+\midrule
+CPC & Tn3x & Annual & 47 & 20 & 18.41 & 1.96 & 0.59 & -0.165\\
+CPC & Tn3x & June & 47 & 100 & 17.44 & 2.62 & 0.67 & -0.294\\
+E-OBS & Tn3x & Annual & 106 & 20 & 17.29 & 0.92 & 0.76 & -0.265\\
+E-OBS & Tn3x & June & 106 & 100 & 17.79 & 1.73 & 0.86 & -0.095\\
+\bottomrule\end{tabular}
 \end{table}
 
-The second contrast illustrates how strongly a location shift can
-affect tail probabilities. Its counterfactual return period is much
-longer than the observation record and should be read as model
-extrapolation. The saved bootstrap gives intensity intervals
-approximately $[1.35,2.08]$ and $[2.47,3.82]\ ^{\circ}\mathrm{C}$,
-with infinite upper RR interval endpoints for both contrasts. These
-conditional parameter intervals do not override diagnostic concerns.
+\subsection{Annual daytime extremes}
+Table~\ref{tab:annualtx} reports RR, FAR, and intensity change for annual
+Tx3x at a factual 25-year threshold. Relative to the 2003-like climate,
+RR ranges from 3.74 for CPC to 37.1 for ERA5, corresponding to FAR values
+of 0.73273 and 0.97306. Berkeley Earth and E-OBS give intermediate RRs
+of 9.53 and 19.4, with FAR values of 0.89503 and 0.94839. Thus the
+estimated fraction of factual risk associated with this climate contrast
+ranges from about 73.3\% to 97.3\% across products.
 
-\subsection{Return-level curves and extensions}
-Evaluate $F^{-1}(1-1/T)$ over a grid of return periods for both
-states. A logarithmic return-period axis makes the tail visible;
-marking record length distinguishes interpolation from extrapolation.
-The supplied \texttt{plot\_figure7.R} generates four-product daytime
-plots and pointwise parameter-bootstrap bands.
+The 1976-like comparison increases all four probability ratios, but by
+very different amounts: 9.15 for CPC, 195 for Berkeley Earth,
+$2.08\times10^3$ for E-OBS, and $4.02\times10^4$ for ERA5. The
+corresponding FAR values are 0.89073, 0.99487, 0.99952, and 0.99998.
+FAR compresses differences once RR is large, so values near one should
+be read together with the underlying ratios and intervals. The
+five-decimal display is descriptive precision, not a claim that FAR is
+known to that accuracy. Finite-RR point estimates that would round to
+1.00000 are displayed as $>0.99999$ in the results tables.
 
-To display historical observations adjusted to climate $G_*$, use
+Intensity estimates have a different ordering. For the 1976-like
+comparison, CPC gives the largest increase,
+$4.03\ ^{\circ}\mathrm{C}$, followed by ERA5 at 3.11, E-OBS at 2.64,
+and Berkeley Earth at $2.09\ ^{\circ}\mathrm{C}$. Their respective
+95\% intervals are $[3.24,4.75]$, $[2.47,3.82]$, $[1.98,3.33]$, and
+$[1.47,2.64]\ ^{\circ}\mathrm{C}$. CPC's comparatively small RR despite
+its large intensity increase is consistent with its positive fitted
+shape and heavier upper tail. Differences in point estimates alone do
+not establish statistically significant differences between products.
+
+\begin{table}[htbp]
+\centering\small
+\caption{Annual Tx3x contrasts at the factual 25-year threshold. Point estimates are followed by nominal 95\% bootstrap percentile intervals.}
+\label{tab:annualtx}
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{llccc}\toprule
+Product & Climate & RR & FAR & $\Delta I$ ($^{\circ}$C)\\\midrule
+ERA5 & 2003-like & \shortstack{$ 37.13 $\\{\scriptsize $[6.17,\,\infty]$}} & \shortstack{$ 0.97306 $\\{\scriptsize $[0.83794,\,1.00000]$}} & \shortstack{$ 1.70 $\\{\scriptsize $[1.35,\,2.08]$}}\\
+ERA5 & 1976-like & \shortstack{$ 4.02\times10^{4} $\\{\scriptsize $[31.94,\,\infty]$}} & \shortstack{$ 0.99998 $\\{\scriptsize $[0.96867,\,1.00000]$}} & \shortstack{$ 3.11 $\\{\scriptsize $[2.47,\,3.82]$}}\\
+\addlinespace[3pt]
+CPC & 2003-like & \shortstack{$ 3.74 $\\{\scriptsize $[1.67,\,57.13]$}} & \shortstack{$ 0.73273 $\\{\scriptsize $[0.39977,\,0.98234]$}} & \shortstack{$ 2.20 $\\{\scriptsize $[1.77,\,2.59]$}}\\
+CPC & 1976-like & \shortstack{$ 9.15 $\\{\scriptsize $[2.37,\,6352]$}} & \shortstack{$ 0.89073 $\\{\scriptsize $[0.57821,\,0.99973]$}} & \shortstack{$ 4.03 $\\{\scriptsize $[3.24,\,4.75]$}}\\
+\addlinespace[3pt]
+Berkeley Earth & 2003-like & \shortstack{$ 9.53 $\\{\scriptsize $[3.57,\,1.57\times10^{4}]$}} & \shortstack{$ 0.89503 $\\{\scriptsize $[0.71956,\,0.99994]$}} & \shortstack{$ 1.14 $\\{\scriptsize $[0.80,\,1.44]$}}\\
+Berkeley Earth & 1976-like & \shortstack{$ 195 $\\{\scriptsize $[11.75,\,\infty]$}} & \shortstack{$ 0.99487 $\\{\scriptsize $[0.91491,\,1.00000]$}} & \shortstack{$ 2.09 $\\{\scriptsize $[1.47,\,2.64]$}}\\
+\addlinespace[3pt]
+E-OBS & 2003-like & \shortstack{$ 19.38 $\\{\scriptsize $[4.90,\,\infty]$}} & \shortstack{$ 0.94839 $\\{\scriptsize $[0.79592,\,1.00000]$}} & \shortstack{$ 1.44 $\\{\scriptsize $[1.08,\,1.81]$}}\\
+E-OBS & 1976-like & \shortstack{$ 2082 $\\{\scriptsize $[18.83,\,\infty]$}} & \shortstack{$ 0.99952 $\\{\scriptsize $[0.94688,\,1.00000]$}} & \shortstack{$ 2.64 $\\{\scriptsize $[1.98,\,3.33]$}}\\
+\bottomrule\end{tabular}
+\end{table}
+
+\subsection{June daytime extremes}
+For June Tx3x, the factual threshold is the fitted 100-year return level
+(Table~\ref{tab:junetx}). Relative to the 2003-like climate, the fitted
+RR is 57.3 for Berkeley Earth, 77.3 for E-OBS, and
+$3.79\times10^3$ for ERA5, while CPC assigns zero probability above
+the threshold in the cooler climate. The corresponding FAR estimates
+are 0.98253, 0.98707, 0.99974, and 1.00000. Compared with annual Tx3x,
+these ratios describe a rarer factual quantile as well as a different
+seasonal distribution; their larger values cannot be attributed solely
+to a stronger June temperature response.
+
+For the 1976-like climate, ERA5, CPC, and Berkeley Earth give infinite
+point-estimate RRs. E-OBS gives a finite but extremely large ratio,
+$3.09\times10^{17}$, from a cooler-climate probability of approximately
+$3.24\times10^{-20}$. Its factual threshold is only about
+$0.003\ ^{\circ}\mathrm{C}$ below the fitted cooler-climate upper
+endpoint. This proximity explains why a tiny tail probability appears
+without crossing the support boundary. In all four products, FAR is
+effectively one at the displayed precision, but this does not remove
+uncertainty about the fitted tail.
+
+The June intensity increases remain finite. They range from 1.33 to
+$2.36\ ^{\circ}\mathrm{C}$ for the 2003-like contrast and from 2.45 to
+$4.33\ ^{\circ}\mathrm{C}$ for the 1976-like contrast. For the latter,
+CPC gives $4.33\ [2.94,5.75]\ ^{\circ}\mathrm{C}$, E-OBS gives
+$3.26\ [2.62,4.07]$, ERA5 gives $3.22\ [2.38,4.11]$, and Berkeley
+Earth gives $2.45\ [1.80,3.15]$. These finite shifts are more directly
+related to the estimated GMST slopes than are the ratios near a support
+boundary.
+
+\begin{table}[htbp]
+\centering\small
+\caption{June Tx3x contrasts at the factual 100-year threshold. Infinite RR values arise from zero fitted cooler-climate exceedance probability. Point estimates are followed by nominal 95\% bootstrap percentile intervals.}
+\label{tab:junetx}
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{llccc}\toprule
+Product & Climate & RR & FAR & $\Delta I$ ($^{\circ}$C)\\\midrule
+ERA5 & 2003-like & \shortstack{$ 3788 $\\{\scriptsize $[10.03,\,\infty]$}} & \shortstack{$ 0.99974 $\\{\scriptsize $[0.90025,\,1.00000]$}} & \shortstack{$ 1.76 $\\{\scriptsize $[1.30,\,2.24]$}}\\
+ERA5 & 1976-like & \shortstack{$ \infty $\\{\scriptsize $[91.36,\,\infty]$}} & \shortstack{$ 1.00000 $\\{\scriptsize $[0.98901,\,1.00000]$}} & \shortstack{$ 3.22 $\\{\scriptsize $[2.38,\,4.11]$}}\\
+\addlinespace[3pt]
+CPC & 2003-like & \shortstack{$ \infty $\\{\scriptsize $[20.61,\,\infty]$}} & \shortstack{$ 1.00000 $\\{\scriptsize $[0.95147,\,1.00000]$}} & \shortstack{$ 2.36 $\\{\scriptsize $[1.60,\,3.14]$}}\\
+CPC & 1976-like & \shortstack{$ \infty $\\{\scriptsize $[296,\,\infty]$}} & \shortstack{$ 1.00000 $\\{\scriptsize $[0.99662,\,1.00000]$}} & \shortstack{$ 4.33 $\\{\scriptsize $[2.94,\,5.75]$}}\\
+\addlinespace[3pt]
+Berkeley Earth & 2003-like & \shortstack{$ 57.25 $\\{\scriptsize $[7.55,\,\infty]$}} & \shortstack{$ 0.98253 $\\{\scriptsize $[0.86761,\,1.00000]$}} & \shortstack{$ 1.33 $\\{\scriptsize $[0.98,\,1.72]$}}\\
+Berkeley Earth & 1976-like & \shortstack{$ \infty $\\{\scriptsize $[66.71,\,\infty]$}} & \shortstack{$ 1.00000 $\\{\scriptsize $[0.98500,\,1.00000]$}} & \shortstack{$ 2.45 $\\{\scriptsize $[1.80,\,3.15]$}}\\
+\addlinespace[3pt]
+E-OBS & 2003-like & \shortstack{$ 77.32 $\\{\scriptsize $[8.14,\,\infty]$}} & \shortstack{$ 0.98707 $\\{\scriptsize $[0.87711,\,1.00000]$}} & \shortstack{$ 1.78 $\\{\scriptsize $[1.43,\,2.22]$}}\\
+E-OBS & 1976-like & \shortstack{$ 3.09\times10^{17} $\\{\scriptsize $[66.21,\,\infty]$}} & \shortstack{$ >0.99999 $\\{\scriptsize $[0.98490,\,1.00000]$}} & \shortstack{$ 3.26 $\\{\scriptsize $[2.62,\,4.07]$}}\\
+\bottomrule\end{tabular}
+\end{table}
+
+\subsection{Nighttime extremes}
+Nighttime results are available for CPC and E-OBS only. For annual
+Tn3x, the factual return period is 20 years
+(Table~\ref{tab:annualtn}). Relative to the 2003-like climate, CPC gives
+RR $=103$ and FAR $=0.99031$, compared with RR $=7.68$ and
+FAR $=0.86984$ for E-OBS. For the 1976-like comparison, the ratios
+increase to $6.47\times10^{10}$ and 255, respectively. The CPC factual
+threshold, $18.405\ ^{\circ}\mathrm{C}$, is about
+$0.036\ ^{\circ}\mathrm{C}$ below its fitted cooler-climate endpoint;
+the enormous ratio is therefore another example of near-endpoint
+extrapolation. The intensity changes are much more moderate:
+$2.16\ [1.44,2.92]\ ^{\circ}\mathrm{C}$ for CPC and
+$1.01\ [0.54,1.48]\ ^{\circ}\mathrm{C}$ for E-OBS.
+
+For June Tn3x at the factual 100-year threshold, CPC gives infinite RR
+and FAR $=1$ for both climate contrasts (Table~\ref{tab:junetn}).
+E-OBS gives RR $=7.72$ and FAR $=0.87043$ for the 2003-like climate,
+and RR $=61.6$ and FAR $=0.98377$ for the 1976-like climate. The
+1976-like intensity changes are $2.88\ [2.08,3.69]\ ^{\circ}\mathrm{C}$
+for CPC and $1.90\ [1.49,2.42]\ ^{\circ}\mathrm{C}$ for E-OBS.
+The difference between CPC and E-OBS is especially visible in their June
+shape estimates, $-0.294$ and $-0.095$, respectively. These results
+illustrate substantial product sensitivity in nighttime tail inference.
+
+Within each product, June intensity changes exceed annual changes for
+both daytime and nighttime indices. Daytime shifts also exceed nighttime
+shifts within each block. These are patterns in the fitted location
+slopes. They do not imply corresponding orderings of RR, since the
+annual return periods differ between Tx3x and Tn3x and the tail
+parameters differ among the fitted distributions.
+
+\begin{table}[htbp]
+\centering\small
+\caption{Annual Tn3x contrasts at the factual 20-year threshold. Point estimates are followed by nominal 95\% bootstrap percentile intervals.}
+\label{tab:annualtn}
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{llccc}\toprule
+Product & Climate & RR & FAR & $\Delta I$ ($^{\circ}$C)\\\midrule
+CPC & 2003-like & \shortstack{$ 103 $\\{\scriptsize $[5.47,\,\infty]$}} & \shortstack{$ 0.99031 $\\{\scriptsize $[0.81702,\,1.00000]$}} & \shortstack{$ 1.18 $\\{\scriptsize $[0.79,\,1.60]$}}\\
+CPC & 1976-like & \shortstack{$ 6.47\times10^{10} $\\{\scriptsize $[22.45,\,\infty]$}} & \shortstack{$ >0.99999 $\\{\scriptsize $[0.95540,\,1.00000]$}} & \shortstack{$ 2.16 $\\{\scriptsize $[1.44,\,2.92]$}}\\
+\addlinespace[3pt]
+E-OBS & 2003-like & \shortstack{$ 7.68 $\\{\scriptsize $[2.70,\,\infty]$}} & \shortstack{$ 0.86984 $\\{\scriptsize $[0.62947,\,1.00000]$}} & \shortstack{$ 0.55 $\\{\scriptsize $[0.29,\,0.81]$}}\\
+E-OBS & 1976-like & \shortstack{$ 255 $\\{\scriptsize $[7.12,\,\infty]$}} & \shortstack{$ 0.99608 $\\{\scriptsize $[0.85947,\,1.00000]$}} & \shortstack{$ 1.01 $\\{\scriptsize $[0.54,\,1.48]$}}\\
+\bottomrule\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering\small
+\caption{June Tn3x contrasts at the factual 100-year threshold. Point estimates are followed by nominal 95\% bootstrap percentile intervals.}
+\label{tab:junetn}
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{llccc}\toprule
+Product & Climate & RR & FAR & $\Delta I$ ($^{\circ}$C)\\\midrule
+CPC & 2003-like & \shortstack{$ \infty $\\{\scriptsize $[159,\,\infty]$}} & \shortstack{$ 1.00000 $\\{\scriptsize $[0.99257,\,1.00000]$}} & \shortstack{$ 1.57 $\\{\scriptsize $[1.13,\,2.02]$}}\\
+CPC & 1976-like & \shortstack{$ \infty $\\{\scriptsize $[3.64\times10^{5},\,\infty]$}} & \shortstack{$ 1.00000 $\\{\scriptsize $[0.99995,\,1.00000]$}} & \shortstack{$ 2.88 $\\{\scriptsize $[2.08,\,3.69]$}}\\
+\addlinespace[3pt]
+E-OBS & 2003-like & \shortstack{$ 7.72 $\\{\scriptsize $[2.86,\,619]$}} & \shortstack{$ 0.87043 $\\{\scriptsize $[0.64990,\,0.99839]$}} & \shortstack{$ 1.04 $\\{\scriptsize $[0.81,\,1.32]$}}\\
+E-OBS & 1976-like & \shortstack{$ 61.62 $\\{\scriptsize $[6.64,\,\infty]$}} & \shortstack{$ 0.98377 $\\{\scriptsize $[0.84943,\,1.00000]$}} & \shortstack{$ 1.90 $\\{\scriptsize $[1.49,\,2.42]$}}\\
+\bottomrule\end{tabular}
+\end{table}
+
+\subsection{Return-level curves and cross-product comparisons}
+Figure~\ref{fig:returnlevels} displays the saved annual Tx3x return-level
+curves for the factual and 1976-like climates. The fixed vertical
+separation within each panel follows from the location-shift model.
+Historical maxima have been adjusted to the respective climate state,
+$G_*$, using
 \begin{equation}
 X_t^{(*)}=X_t+\widehat\alpha(G_*-G_t).
 \end{equation}
-These are model-dependent transformations, not observations from the
-comparison world. Products can be shown separately using consistent
-axis conventions, with their coverage and record lengths stated.
+The plotted points are therefore transformed observations, not separate
+observational samples from the two climates. The figure's pointwise
+bands use a separate set of 300 parametric bootstrap fits per product,
+all successful, whereas the attribution tables use 200 requested fits.
 
-For June Tx3x, repeat the workflow with June blocks and the
-corresponding return period. For Tn3x, begin with daily minimum
-temperature and preserve the aggregation order. A useful learning
-exercise is to identify the steps that change before running these
-extensions. Annual and June indices represent different event
-populations and should not be interpreted interchangeably.
+At the factual 25-year threshold, the fitted return periods in the
+1976-like climate are approximately 229 years for CPC, 4,876 years
+for Berkeley Earth, 52,044 years for E-OBS, and 1,005,534 years for
+ERA5. The last two intersections lie beyond the displayed return-period
+range. These numbers summarize the fitted distributional comparisons;
+their very large magnitudes should be interpreted as extrapolations
+rather than as empirically resolved recurrence times.
 
-\section{Interpreting attribution results}
-\subsection{Risk change and potential outcomes}
-Marginal risk comparisons do not by themselves determine whether an
-influence was necessary for an individual event. Potential outcomes
-make the distinction precise \cite{hannart2016}. Let $A\in\{0,1\}$
-indicate a specified climate intervention and $Y_a\in\{0,1\}$ event
-occurrence under intervention $a$. Both outcomes concern the same
-underlying situation, requiring a definition of what remains fixed
-across worlds.
+Figure~\ref{fig:farintensity} compares FAR and intensity changes for all
+12 fitted models at the 1976-like contrast. Most FAR point estimates
+cluster near one, even though the intensity estimates range from about
+1.01 to $4.33\ ^{\circ}\mathrm{C}$. The intervals distinguish the two
+summaries: FAR is bounded above by one, while the intensity intervals
+reflect uncertainty in the location slope. A FAR close to one therefore
+does not imply a precisely known probability ratio or a common physical
+temperature response across products.
 
-For this example, the intervention would correspond to the specified
-warmer-versus-cooler contrast. It cannot be relabeled as presence
-versus absence of all anthropogenic forcing without further
-justification. An observed association with GMST also does not
-establish an exogenous intervention.
+\begin{figure}[p]
+\centering
+\includegraphics[width=\textwidth]{assets/annual_tx3x_return_levels.pdf}
+\caption{Annual Tx3x return levels from the saved four-product analysis.
+Red curves denote the factual climate and blue curves the 1976-like
+climate. Points are climate-adjusted historical maxima; shaded regions
+are pointwise 95\% parametric-bootstrap intervals from 300 replicates
+per product. The magenta line marks each product's factual 25-year
+threshold. Vertical scales differ across panels; bands extending beyond
+the panel limits are clipped in the original plot.}
+\label{fig:returnlevels}
+\end{figure}
 
-\subsection{Probabilities of causation}
-Define necessary causation, sufficient causation, and
-necessary-and-sufficient causation as
-\begin{align}
-PN&=P(Y_0=0\mid A=1,Y=1),\\
-PS&=P(Y_1=1\mid A=0,Y=0),\\
-PNS&=P(Y_0=0,Y_1=1).
-\end{align}
-PN asks whether an event under the influence would fail to occur
-without it. PS asks whether adding the influence would produce an
-event in a situation where none occurred without it. PNS is the
-fraction of situations switched from non-event to event.
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{assets/far_intensity_comparison.pdf}
+\caption{FAR and intensity change for the 1976-like climate comparison.
+Points show saved estimates and horizontal lines show their nominal
+95\% bootstrap intervals. Annual Tx3x, annual Tn3x, and June indices use
+factual return periods of 25, 20, and 100 years, respectively. FAR near
+one can coexist with a wide range of intensity changes.}
+\label{fig:farintensity}
+\end{figure}
 
-Write $p_a=P(Y_a=1)$. Under consistency, suitable exogeneity
-connecting the compared risks to intervention risks, and
-individual-level monotonicity $Y_1\geq Y_0$,
-\begin{equation}
-PNS=p_1-p_0,\qquad PN=\frac{p_1-p_0}{p_1},\qquad
-PS=\frac{p_1-p_0}{1-p_0},
-\label{eq:causal}
-\end{equation}
-with nonzero denominators. If factual and cooler-climate risks can be
-identified with these intervention risks, $PN=\mathrm{FAR}$. This is a
-probability of necessity for crossing a defined threshold, not a
-probability that warming was the sole cause of the weather situation.
+\clearpage
+\subsection{Bootstrap behavior and precision}
+The retained bootstrap counts in Table~\ref{tab:bootstrap} range from
+178 to 200 out of 200 requested fits. All fits are retained for ERA5,
+Berkeley Earth, and E-OBS, and for CPC annual Tx3x. CPC June Tx3x
+retains 188, CPC annual Tn3x retains 199, and CPC June Tn3x retains
+178. The last case therefore excludes 11\% of requested replicates.
+The saved samples identify failed fits as missing but do not distinguish
+the individual failure reasons. The reported intervals are conditional
+on successful refitting.
 
-For $p_0=0.02$ and $p_1=0.10$, PN is 0.80, PS is approximately 0.0816,
-and PNS is 0.08. Their magnitudes differ because their conditioning
-populations differ. Without monotonicity, marginal risks generally do
-not identify the joint potential-outcome distribution. An upward shift
-of marginal temperature distributions does not establish
-individual-level monotonicity.
+Infinite bootstrap ratios are common even when the point estimate is
+finite. For annual ERA5 Tx3x, 90 of 200 retained replicates give infinite
+RR for the 1976-like contrast. For June CPC Tn3x, the corresponding
+count is 171 of 178, or about 96.1\%. Its reported lower 95\% endpoint
+is nevertheless finite, approximately $3.64\times10^5$, because a small
+number of retained replicates have finite ratios. In contrast, annual
+CPC Tx3x has only two infinite ratios among 200 replicates for the
+1976-like comparison, so its reported 97.5th percentile remains finite
+at approximately 6,352. These differences show why the number of
+infinite replicates is informative alongside the interval endpoints.
 
-\section{Practical considerations and conclusions}
-The analysis starts with a scientific definition and ends with an
-interpretation. The footprint, aggregation order, duration, and
-seasonal block must be explicit. Return-period-defined and observed
-thresholds require different uncertainty calculations. A location-only
-GMST dependence simplifies intensity estimation but remains a model to
-diagnose. Remote-tail probabilities require attention to shape
-uncertainty and finite endpoints. Finally, causal language requires a
-defensible climate contrast and assumptions beyond statistical
-association.
+Across all 24 comparisons, the saved lower RR endpoints exceed one,
+the lower FAR endpoints exceed zero, and the lower intensity endpoints
+are positive. This agreement supports the direction of the fitted
+climate-state contrasts under the specified model. It does not provide
+simultaneous coverage across comparisons or account for uncertainties
+in product choice, spatial footprint, GMST, or tail specification. FAR
+intervals are taken directly from the bootstrap FAR samples, rather
+than obtained by transforming already rounded RR interval endpoints.
 
-This tutorial connects daily preparation to nonstationary GEV fitting,
-probability and intensity comparisons, bootstrap uncertainty, and
-causal interpretation. It teaches the observational component of
-attribution, rather than replacing a complete assessment of
-anthropogenic forcing or heat impacts. Adaptation to another region
-should revisit event definition and data support before adopting
-numerical settings. Readers should be able to explain why each
-quantity was computed, which assumptions support it, and what
-additional evidence would support a broader claim.
+\begin{table}[htbp]
+\centering\small
+\caption{Bootstrap fits retained out of 200 requested replicates per model, and the number of retained replicates with infinite RR for each climate comparison.}
+\label{tab:bootstrap}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{lllrrr}\toprule
+Product & Index & Block & Retained & $\infty$: 2003-like & $\infty$: 1976-like\\\midrule
+ERA5 & Tx3x & Annual & 200/200 & 23 & 90\\
+ERA5 & Tx3x & June & 200/200 & 95 & 153\\
+CPC & Tx3x & Annual & 200/200 & 0 & 2\\
+CPC & Tx3x & June & 188/200 & 132 & 168\\
+Berkeley Earth & Tx3x & Annual & 200/200 & 3 & 36\\
+Berkeley Earth & Tx3x & June & 200/200 & 29 & 114\\
+E-OBS & Tx3x & Annual & 200/200 & 9 & 67\\
+E-OBS & Tx3x & June & 200/200 & 43 & 113\\
+\midrule
+CPC & Tn3x & Annual & 199/200 & 49 & 110\\
+CPC & Tn3x & June & 178/200 & 158 & 171\\
+E-OBS & Tn3x & Annual & 200/200 & 6 & 60\\
+E-OBS & Tn3x & June & 200/200 & 1 & 22\\
+\bottomrule\end{tabular}
+\end{table}
+
+\section{Discussion}
+The expanded results show a consistent positive location response to
+GMST across all products, indices, and blocks examined. The magnitude
+of the response varies substantially: annual daytime intensity change
+for the 1976-like comparison ranges from 2.09 to
+$4.03\ ^{\circ}\mathrm{C}$, while annual nighttime change ranges from
+1.01 to $2.16\ ^{\circ}\mathrm{C}$. June point estimates are larger
+within every product and index. Because records, footprints, and data
+construction differ, these contrasts identify sensitivity among the
+current analyses rather than isolating the effect of any one data choice.
+
+The results also demonstrate that probability and intensity summaries
+need to be reported together. CPC annual Tx3x combines the largest
+intensity shift with the smallest annual daytime RR, while several
+June fits produce infinite ratios from finite endpoints. FAR supplies
+an expression of the relative risk difference with an upper bound of
+one, but approaches
+one rapidly as RR grows and can conceal large differences in the
+underlying probabilities. Reporting FAR with RR, intensity change,
+intervals, and fitted tail parameters makes these features visible.
+
+The principal statistical limitation is the amount of information
+available about the cooler-climate tail. Very large return periods and
+near-endpoint estimates are controlled strongly by the fitted shape,
+and the prevalence of infinite bootstrap ratios shows that this is not
+only a property of one point estimate. The 200-replicate attribution
+bootstrap also provides a limited basis for estimating tail percentiles,
+especially where some fits fail. More replicates would clarify Monte
+Carlo stability, but would not resolve model misspecification.
+
+Further work should compare products over common fitting years, assess
+the fixed-mask and GMST endpoint assumptions, and examine whether a
+climate-dependent scale improves the fit. The current data products
+share information and should not be averaged as independent estimates
+without a model for their dependence. Similarly, separate Tx3x and
+Tn3x fits do not characterize the joint occurrence of hot days and warm
+nights. These extensions concern the robustness and scope of the
+observational analysis described here, consistent with the broader
+statistical issues discussed by Naveau et al.\ \cite{naveau2020}.
 
 \appendix
-\section{Response types and causal bounds}
-Let $q_{ij}=P(Y_0=i,Y_1=j)$. Then $p_0=q_{10}+q_{11}$ and
-$p_1=q_{01}+q_{11}$, so $p_1-p_0=q_{01}-q_{10}$. Monotonicity sets
-$q_{10}=0$, identifying the caused response type as $q_{01}=p_1-p_0$.
-With consistency and exogeneity, dividing this fraction by $p_1$ or
-$1-p_0$ gives PN or PS.
+\section{Implementation and result provenance}
+The numerical results are taken from the six product--variable output
+directories in the \path{cpc_rr} project. The files ending in
+\path{risk_ratios_PROVISIONAL.csv} provide point estimates, percentile
+intervals, and retained bootstrap counts. The associated
+\path{fits_and_bootstrap.rds} files provide fitted parameters and
+bootstrap arrays, while \path{annual_extremes_and_gmst.csv} records
+fitting years and inclusion. The separate \path{bootstrap_samples.csv}
+files retain the individual replicate results. The tables were checked
+against the saved fit objects and the percentile calculations used by
+the implementation; no statistical model was refitted for tabulation.
 
-Without monotonicity, the marginal bounds are
-\begin{equation}
-\max(0,p_1-p_0)\leq PNS=q_{01}\leq\min(p_1,1-p_0).
-\end{equation}
-Under the remaining identification assumptions, divide these bounds by
-$p_1>0$ for PN and $1-p_0>0$ for PS. If observational risks do not
-identify intervention risks, the bounds cannot simply be applied to
-GEV outputs.
+Data preparation and distributional calculations use
+\path{Code/config/paths.R}, \path{Code/helpers/workflow.R}, and
+\path{Code/helpers/gev.R}. The GMST series is produced by
+\path{Code/prepare_gmst.R}, and each product--variable script constructs
+the corresponding indices and fits. The annual Tx3x figure is retained
+from \path{figure7/figure7_tx3x_four_datasets.pdf}, with only its external
+title removed for manuscript placement. Its summary file records
+300 successful bootstrap fits for each of the four products.
 
-\section{Suggested exercises}
-\begin{enumerate}
-\item Calculate RR, FAR, and return periods for $p_F=0.04$ and
-$p_C=0.01$. State which threshold remains fixed.
-\item For $\alpha=2.5$, calculate intensity changes at $\Delta G=0.6$
-and 1.1. Explain why changing $T$ has no effect in this model.
-\item Calculate both GEV upper endpoints for a negative shape
-parameter and examine their position relative to the factual
-threshold.
-\item Replace a return-period-defined threshold with an observed
-temperature. Identify the required changes in the bootstrap.
-\item Compare annual and June fits over common years and explain their
-different event definitions.
-\item Derive PNS bounds for $p_0=0.02$, $p_1=0.10$ without
-monotonicity.
-\end{enumerate}
-
-\section{Implementation materials}
-The example uses the supplied \texttt{WWA\_EU\_heatwave\_2026}
-analysis directory and meeting slides dated 23 September 2026. The
-code was developed from the WWA report's observational workflow. Its
-working numerical estimates remain conditional illustrations subject
-to model checking. The preparation scripts, GEV helper, saved outputs,
-and diagnostics constitute the implementation materials. A public
-repository and archived software environment should be provided before
-publication. References are embedded for standalone compilation; the
-existing \texttt{reference.bib} remains available for subsequent
-journal formatting.
+The provisional designation reflects the implementation's data-version,
+mask, GMST endpoint, and optimization choices; these results are not
+claimed to reproduce the motivating report exactly. The tables report
+products separately and use the existing successful-fit percentile
+intervals. Reproduction requires the source data versions and the
+original analysis settings in addition to these saved summaries.
 
 \begin{thebibliography}{99}
 \bibitem{coles2001} Coles, S. (2001). \emph{An Introduction to
@@ -712,11 +922,6 @@ Statistical Modeling of Extreme Values}. Springer.
 probabilistic extreme event attribution analyses. \emph{Advances in
 Statistical Climatology, Meteorology and Oceanography}, 6, 177--203.
 \url{https://doi.org/10.5194/ascmo-6-177-2020}.
-\bibitem{hannart2016} Hannart, A., Pearl, J., Otto, F. E. L., Naveau,
-P., and Ghil, M. (2016). Causal counterfactual theory for the
-attribution of weather and climate-related events. \emph{Bulletin of
-the American Meteorological Society}, 97, 99--110.
-\url{https://doi.org/10.1175/BAMS-D-14-00034.1}.
 \bibitem{keeping2026} Keeping, T., et al. (2026). \emph{Fossil fuel
 emissions have rapidly worsened European heatwaves in just a few
 decades}. WWA scientific report No. 85.
@@ -751,10 +956,6 @@ Alexander, L. V., Donat, M. G., and Tung, Y.-S. (2016). Attribution of
 extreme temperature changes during 1951--2010. \emph{Climate
 Dynamics}, 46, 1769--1782.
 \url{https://doi.org/10.1007/s00382-015-2674-2}.
-\bibitem{ribes2020} Ribes, A., Thao, S., and Cattiaux, J. (2020).
-Describing the relationship between a weather event and climate
-change: A new statistical approach. \emph{Journal of Climate}, 33,
-6297--6314. \url{https://doi.org/10.1175/JCLI-D-19-0217.1}.
 \end{thebibliography}
 \end{document}
 
