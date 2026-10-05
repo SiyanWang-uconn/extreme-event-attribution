@@ -516,8 +516,7 @@ uncertainty.
 \subsection{Data coverage and fitted distributions}
 The results comprise 12 fitted distributions and 24 climate contrasts:
 annual and June Tx3x for ERA5, CPC, Berkeley Earth, and E-OBS, and annual
-and June Tn3x for CPC and E-OBS. They are drawn from the saved
-\path{cpc_rr} analysis, whose outputs are labeled provisional because
+and June Tn3x for CPC and E-OBS. The outputs are labeled provisional because
 the data versions and implementation choices are not identical to those
 of the motivating report. The present comparisons retain each product's
 available fitting period rather than refitting to a common period.
@@ -747,6 +746,19 @@ The plotted points are therefore transformed observations, not separate
 observational samples from the two climates. The figure's pointwise
 bands use a separate set of 300 parametric bootstrap fits per product,
 all successful, whereas the attribution tables use 200 requested fits.
+In this figure, red curves denote the factual climate and blue curves the 1976-like
+climate. Points are climate-adjusted historical maxima; shaded regions
+are pointwise 95\% parametric-bootstrap intervals from 300 replicates
+per product. The magenta line marks each product's factual 25-year
+threshold. Vertical scales differ across panels; bands extending beyond
+the panel limits are clipped in the original plot.
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=0.8\textwidth]{assets/annual_tx3x_return_levels.pdf}
+\caption{Annual Tx3x return levels from the saved four-product analysis.}
+\label{fig:returnlevels}
+\end{figure}
 
 At the factual 25-year threshold, the fitted return periods in the
 1976-like climate are approximately 229 years for CPC, 4,876 years
@@ -757,7 +769,10 @@ their very large magnitudes should be interpreted as extrapolations
 rather than as empirically resolved recurrence times.
 
 Figure~\ref{fig:farintensity} compares FAR and intensity changes for all
-12 fitted models at the 1976-like contrast. Most FAR point estimates
+12 fitted models at the 1976-like contrast. Points show saved estimates and horizontal lines show their nominal
+95\% bootstrap intervals. Annual Tx3x, annual Tn3x, and June indices use
+factual return periods of 25, 20, and 100 years, respectively. FAR near
+one can coexist with a wide range of intensity changes.Most FAR point estimates
 cluster near one, even though the intensity estimates range from about
 1.01 to $4.33\ ^{\circ}\mathrm{C}$. The intervals distinguish the two
 summaries: FAR is bounded above by one, while the intensity intervals
@@ -765,27 +780,11 @@ reflect uncertainty in the location slope. A FAR close to one therefore
 does not imply a precisely known probability ratio or a common physical
 temperature response across products.
 
-\begin{figure}[p]
-\centering
-\includegraphics[width=\textwidth]{assets/annual_tx3x_return_levels.pdf}
-\caption{Annual Tx3x return levels from the saved four-product analysis.
-Red curves denote the factual climate and blue curves the 1976-like
-climate. Points are climate-adjusted historical maxima; shaded regions
-are pointwise 95\% parametric-bootstrap intervals from 300 replicates
-per product. The magenta line marks each product's factual 25-year
-threshold. Vertical scales differ across panels; bands extending beyond
-the panel limits are clipped in the original plot.}
-\label{fig:returnlevels}
-\end{figure}
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=\textwidth]{assets/far_intensity_comparison.pdf}
-\caption{FAR and intensity change for the 1976-like climate comparison.
-Points show saved estimates and horizontal lines show their nominal
-95\% bootstrap intervals. Annual Tx3x, annual Tn3x, and June indices use
-factual return periods of 25, 20, and 100 years, respectively. FAR near
-one can coexist with a wide range of intensity changes.}
+\includegraphics[width=0.8\textwidth]{assets/far_intensity_comparison.pdf}
+\caption{FAR and intensity change for the 1976-like climate comparison.}
 \label{fig:farintensity}
 \end{figure}
 
