@@ -367,27 +367,153 @@ that range. This restriction is an estimation choice and should be
 reported when interpreting fitted endpoints or failed bootstrap samples.
 
 \subsection{Assessment of the fitted distribution}
-The probability integral transform provides a common diagnostic scale:
-\begin{equation}
-u_t=F(X_t;\widehat\mu_t,\widehat\sigma,\widehat\xi),
-\qquad z_t=\Phi^{-1}(u_t).
-\end{equation}
-With known parameters and a correct continuous model, the transforms
-would be uniform and standard normal, respectively. Estimated parameters
-alter their sampling behavior. Quantile plots and residual patterns can
-nevertheless reveal departures in distributional shape, remaining
-covariate dependence, or changing spread; serial dependence challenges
-the factorization in Equation~\eqref{eq:likelihood}. Simulating and
-refitting the model allows diagnostic envelopes to reflect estimation.
+Before using a fitted model to estimate event probabilities, we need
+to ask two questions: does it describe the distribution of the
+observed extremes, and do the observations retain temporal dependence
+after accounting for the modeled climate response? These questions
+concern different assumptions. A model can describe the overall
+distribution well while overlooking associations between successive
+years. Such dependence would challenge the independent-block
+likelihood and the uncertainty calculations based on independent
+simulations. Conversely, observations can show little autocorrelation
+while their distribution is poorly represented by the GEV.
 
-Diagnostics are especially consequential for attribution because the
-cooler-climate probability may be far smaller than probabilities directly
-represented in the data. A satisfactory fit over the observed range is
-necessary evidence for the model, but provides limited validation of
-such remote extrapolation. The existing ERA5 annual diagnostic exercise
-indicates departures requiring further investigation. Its estimates, together with the other provisional product results,
-are therefore interpreted conditional on the fitted model and the
-remaining diagnostic limitations.
+We therefore assess these aspects separately. The Kolmogorov--Smirnov
+(KS) test compares the distribution implied by the fitted model with
+the observations on a common probability scale \cite{massey1951}. The
+Ljung--Box test checks whether transformed residuals exhibit
+autocorrelation across a selected range of time lags \cite{ljung1978}.
+Used together, they help assess distributional fit and the
+plausibility of treating the blocks as independent, although neither
+can establish that the model is correct. We first describe the
+distributional check and then the assessment of serial dependence.
+
+Since the
+nonstationary
+GEV has a different location in each year, raw maxima cannot be
+compared
+with a single stationary distribution. We first calculate the
+probability integral transform (PIT) for each observation:
+\begin{equation}
+u_t=F(X_t;\widehat\mu_t,\widehat\sigma,\widehat\xi).
+\end{equation}
+Each value is the cumulative probability of the observed maximum under
+its fitted year-specific distribution. With known parameters and a
+correct continuous conditional model, the PIT values are uniform on
+$[0,1]$. Conditional independence of the maxima additionally implies
+independence of these transforms.
+
+Let $\widehat H_n$ denote the empirical distribution of the PIT
+values.
+The two-sided one-sample KS statistic is
+\begin{equation}
+D_n=\sup_{0\leq u\leq1}|\widehat H_n(u)-u|,
+\qquad
+\widehat H_n(u)=\frac{1}{n}\sum_{t=1}^{n}
+\mathbf{1}\{u_t\leq u\}.
+\end{equation}
+For ordered values $u_{(1)}\leq\cdots\leq u_{(n)}$, we compute it as
+\begin{equation}
+D_n=\max_{1\leq i\leq n}
+\left\{\frac{i}{n}-u_{(i)},\;
+u_{(i)}-\frac{i-1}{n}\right\}.
+\end{equation}
+The statistic measures the largest discrepancy from uniformity. Its
+reference distribution must account for estimating the GEV parameters
+from the same observations used to calculate the PIT values
+\cite{durbin1973}.
+
+For each product, index, and season, we request $B=999$ parametric
+bootstrap replicates. Historical years and GMST values remain fixed.
+In each replicate, one maximum per year is simulated from the fitted
+year-specific GEV. The simulated sample is then fitted using the same
+nonstationary model and optimization procedure. PIT values are
+computed
+from this refitted distribution, and their KS statistic is recorded.
+The calibration follows the simulate-and-refit principle used for
+bootstrap goodness-of-fit tests with estimated parameters
+\cite{stute1993}. That literature provides general motivation; it does
+not by itself establish finite-sample validity for this
+covariate-dependent
+GEV. Refitting reproduces the effect of parameter estimation; applying
+the
+usual fully specified uniform KS reference distribution directly to
+estimated PIT values would not account for that effect.
+
+Let $m$ denote the number of successful bootstrap refits, and let $k$
+denote the number of their statistics satisfying $D_n^{(b)}\geq D_n$.
+The implementation reports the successful-refit p-value
+\begin{equation}
+\widehat p_{\mathrm{success}}=\frac{1+k}{1+m}.
+\end{equation}
+Failed refits are recorded with their error messages. Their effect is
+summarized by assigning none or all of the missing statistics to the
+exceedance count:
+\begin{equation}
+\widehat p_{\mathrm{lower}}=\frac{1+k}{1+B},\qquad
+\widehat p_{\mathrm{upper}}=\frac{1+k+B-m}{1+B}.
+\end{equation}
+This range describes sensitivity to unresolved refits, rather than a
+confidence interval or a measure of Monte Carlo uncertainty. The
+random
+seed, observed statistic, requested and successful counts, and these
+p-value summaries are retained for each check.
+
+Distributional agreement and serial dependence are distinct aspects of
+assessment. Dependence diagnostics are especially relevant in extreme
+value analysis \cite{ledford2003}. To complement the KS check, we use
+the Ljung--Box statistic \cite{ljung1978} on normal-score PIT
+residuals,
+\begin{equation}
+z_t=\Phi^{-1}(u_t),
+\end{equation}
+ordered chronologically. This transformation removes the modeled
+year-specific marginal distribution and places the observations on a
+common scale. Finite normal scores require $0<u_t<1$; numerical
+endpoint
+values must be investigated and any numerical treatment documented.
+
+For a prespecified maximum lag $h<n$, define the sample
+autocorrelation
+\begin{equation}
+\widehat\rho_k=
+\frac{\sum_{t=k+1}^{n}(z_t-\overline z)(z_{t-k}-\overline z)}
+{\sum_{t=1}^{n}(z_t-\overline z)^2}.
+\end{equation}
+The Ljung--Box statistic is
+\begin{equation}
+Q_h=n(n+2)\sum_{k=1}^{h}\frac{\widehat\rho_k^2}{n-k}.
+\end{equation}
+It aggregates discrepancies from zero autocorrelation over lags 1
+through $h$. The chosen lag must be reported and selected in relation
+to the record length before examining p-values. For complete annual
+records, lag $k$ corresponds to $k$ years. Missing fitting years
+cannot
+simply be compressed into consecutive annual observations; the lag
+interpretation and calibration must account for such gaps.
+
+For fitted GEV residuals, we calibrate $Q_h$ by the same independent
+parametric simulation and refitting scheme described above: compute
+normal-score PIT residuals from each refit and recalculate $Q_h$ using
+the same lag. The exceedance-count p-value and failure-sensitivity
+range
+are obtained by replacing $D_n^{(b)}$ and $D_n$ with $Q_h^{(b)}$ and
+$Q_h$. This is a model-specific calibration under independent blocks,
+rather than an automatic chi-squared approximation or an ARMA
+degrees-of-freedom adjustment transplanted to the GEV parameters.
+It accounts for refitting within the proposed procedure, but its
+finite-sample calibration remains an approximation.
+
+The KS statistic assesses pooled PIT distributional agreement, whereas
+Ljung--Box assesses autocorrelation at the chosen lags. Neither
+non-rejection establishes the full model: pooled uniformity can
+conceal
+covariate-specific departures, and lack of autocorrelation does not
+imply independence. Residual plots and autocorrelation plots provide
+complementary information. Neither check directly validates
+cooler-climate probabilities far beyond the observed tail. The two
+checks are reported separately, with their calibration and limitations
+made explicit.
 
 \section{Probability and intensity contrasts}
 \label{sec:contrasts}
