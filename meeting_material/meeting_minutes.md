@@ -1,5 +1,74 @@
 # Meeting Minutes
 
+**Date: 10/8/2026**  
+**Time: 9AM**  
+
+
+## 1. What We Discussed
+
+### Progress Updates
+
+- Tutorial paper draft
+- Add up goodness-of-fit check
+
+### Research Results / Materials Presented
+
+- 
+
+### Main Discussion Points
+
+- Adjustment of paper
+- Next step priority is getting the data about Pakistan flood.
+- 
+
+### Questions and Concerns
+
+- What other way we can use to dealing non-stationary data?
+- How to deal with return level under non-stationary data?
+- If the KS test appropriate in this non-stationary example?
+- Is Ljung-box test appropriate here?
+- Probably we can include the introduction of PN, PNS,PS such causal concept in this paper.(Siyan thoughts)
+
+
+## 2. What We Decided
+
+### Decisions
+
+- **First priority**: Get data from WCRP about Pakistan flood.
+- Paper:
+  1. Do not include fig7 in our paper, as this is what they have done.
+  2. Adjust the frame: intro->set up(data glance, raise up problem et al.)->method(notation,theory)->results
+  3. Intro should answer 3 question: Why important? What has been done? What's new (create a step-by-step turoial paper,
+  make the cutting edge method accessible)?
+- Repo:
+  1. Use makefile tool.
+  2. Adjust bib file(At least have a glance about the literature).
+
+
+### Advisor’s Feedback and Recommendations
+
+- Above
+- Think about what could be counterfactual? The combination of causal inference and extreme value theory is less 
+crowded, we should catch that.
+
+
+
+### Changes to the Research Plan or Methods
+
+- **First priority**: Get data from WCRP about Pakistan flood. Try to applied the same method in this data.
+
+## 3. What to Do Next
+
+| Action Item | Responsible Person | Deadline | Status |
+|---|---|---|---|
+| Get data  | Siyan  | ASAP | Not started |
+| Update bib| Siyan |  | Not started |
+| Update paper | Siyan |  | Not started |
+
+
+# 2026/09/24
+
+
 **Date: 09/24/2026**  
 **Time: 9AM**  
 
