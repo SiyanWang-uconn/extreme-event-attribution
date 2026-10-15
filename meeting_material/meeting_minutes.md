@@ -1,5 +1,65 @@
 # Meeting Minutes
 
+
+# Meeting Minutes
+
+**Date: 10/15/2026**  
+**Time: 9AM**  
+
+
+## 1. What We Discussed
+
+### Progress Updates
+
+- Tutorial paper frame update.introduction updated, but content not very much change.
+
+- Read a few paper about the nonstationary data, thinking about the choice of counterfactual.
+
+- Include PN/PNS/PS in draft, adding flavor of causal inference,not sure if that is appropriate.
+
+-
+
+### Research Results / Materials Presented
+
+- 
+
+### Main Discussion Points
+
+- 
+- 
+
+### Questions and Concerns
+
+- 
+
+
+## 2. What We Decided
+
+### Decisions
+
+- 
+
+
+### Advisor’s Feedback and Recommendations
+
+- 
+
+
+
+### Changes to the Research Plan or Methods
+
+- 
+
+## 3. What to Do Next
+
+| Action Item | Responsible Person | Deadline | Status |
+|---|---|---|---|
+| Get data  | Siyan  | ASAP | Not started |
+| Update bib| Siyan |  | Not started |
+| Update paper | Siyan |  | Not started |
+
+# 2026/10/8
+
 **Date: 10/8/2026**  
 **Time: 9AM**  
 
