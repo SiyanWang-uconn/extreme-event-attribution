@@ -1,8 +1,6 @@
 # Meeting Minutes
 
 
-# Meeting Minutes
-
 **Date: 10/15/2026**  
 **Time: 9AM**  
 
@@ -25,8 +23,15 @@
 
 ### Main Discussion Points
 
-- 
-- 
+- Target 27/03/15 paper submission deadline of WCRP EPESC PNW heatwave.
+- Non stationary data dealing
+  1. cheng2014non: get to know **how they calculate non stationary return period**, including the
+  notation $\widetilde{T}$, $\widetilde{\mu}$ in formula.
+  2. mentaschi2016transformed is not statistical, ignore it.
+- Counterfactual world choice: consider 1951(global warming starts)
+- Use of bayes
+
+
 
 ### Questions and Concerns
 
@@ -37,13 +42,13 @@
 
 ### Decisions
 
-- 
-
+- **Turn to PNW heatwave, following the guideline of data collection for data. Use previous code.**
+- **Read paciorek2018quantifying carefully.**
 
 ### Advisor’s Feedback and Recommendations
 
-- 
-
+- A useful R package `nimble` for bayes.
+- For literature, glance buschow2024reconciling for what is `storyline`.
 
 
 ### Changes to the Research Plan or Methods
@@ -54,9 +59,10 @@
 
 | Action Item | Responsible Person | Deadline | Status |
 |---|---|---|---|
-| Get data  | Siyan  | ASAP | Not started |
-| Update bib| Siyan |  | Not started |
-| Update paper | Siyan |  | Not started |
+| Do PNW heatwave  | Siyan  | ASAP | Not started |
+| Read paciorek2018quantifying | Siyan |  | Not started |
+|  |  |  | |
+
 
 # 2026/10/8
 
