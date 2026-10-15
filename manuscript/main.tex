@@ -253,44 +253,51 @@ distributions under different climates; they do not impose a pairing
 of individual weather realizations across climates.
 
 The risk ratio (RR), also called the probability ratio, and the
-fraction of attributable risk (FAR) are
+fraction of attributable risk (FAR) are defined as
 \begin{equation}
 \mathrm{RR}(u)=\frac{p_F(u)}{p_C(u)},\qquad
 \mathrm{FAR}(u)=\frac{p_F(u)-p_C(u)}{p_F(u)}
 =1-\frac{1}{\mathrm{RR}(u)},
 \label{eq:rr}
 \end{equation}
-where the denominators are positive. RR measures how much more likely
+ RR measures how much more likely
 the event is in the factual climate, whereas FAR expresses the
 fraction of factual event risk attributable to the specified
-influence. Algebraically, it is the excess probability $p_F-p_C$
-divided by the factual probability $p_F$. For example, $\mathrm{RR}=4$
+influence. For example, $\mathrm{RR}=4$
 gives $\mathrm{FAR}=0.75$: three quarters of the factual event risk
 constitute excess risk relative to the counterfactual climate. This
 fraction concerns event probability, rather than the fraction of the
 observed temperature attributable to the influence. FAR lies between
 zero and one for a risk-increasing contrast and is negative when
-$p_F<p_C$.
+$p_F(u)<p_C(u)$. When the event is impossible in the counterfactual climate,
+$p_C(u)=0$ and $\mathrm{RR}=\infty$, $\mathrm{FAR}=1$. In that case, the
+factual event is fully attributable to the influence, but the
+probability ratio is not finite.
 
 Hannart et al.\ \cite{hannart2016causal} relate this fraction to the
-probability of necessary causation (PN): the probability that an event
-occurring with the influence would not have occurred without it. Under
-consistency, exogeneity, and monotonicity, $\mathrm{PN}=\mathrm{FAR}$.
-The probability of sufficient causation (PS) instead asks whether
-introducing the influence would produce an event where neither was
-present, while the probability of necessary and sufficient causation
-(PNS) describes situations in which the event occurs with the
-influence but not without it. Under the same assumptions,
+probability of necessary causation (PN), the probability of sufficient 
+causation (PS) and the probability of necessary and sufficient causation
+(PNS). They are defined as,
 \begin{equation}
-\mathrm{PS}=\frac{p_F-p_C}{1-p_C},\qquad
-\mathrm{PNS}=p_F-p_C,
+    \begin{aligned}
+    \mathrm{PN}(u)
+        &= \max\!\left\{\mathrm{FAR}(u),\,0\right\}, \\[6pt]
+    \mathrm{PS}(u)
+        &= \max\!\left\{
+       \frac{p_F(u)-p_C(u)}{1-p_C(u)},\,0
+     \right\}, \\[6pt]
+    \mathrm{PNS}(u)
+        &= \max\!\left\{p_F(u)-p_C(u),\,0\right\}. \\[6pt]
+\end{aligned}
 \label{eq:causalrisks}
 \end{equation}
-where $p_C<1$ for PS. These causal interpretations require the
+Under consistency, exogeneity, and monotonicity,
+ $\mathrm{PN}(u)=\mathrm{FAR}(u)$.
+These causal interpretations require the
 compared probabilities to represent the corresponding intervention
 risks; they do not follow from the fitted GEV distributions alone.
 
-The climate states are represented by GMST values $G_F$ and $G_C$. The
+In this paper, the climate states are represented by GMST values $G_F$ and $G_C$. The
 distributions $F_F$ and $F_C$ are evaluations of one nonstationary GEV
 at these states, fitted using the historical pairs $(X_t,G_t)$. Here
 $X_t$ denotes the observed annual or June index in the transient
