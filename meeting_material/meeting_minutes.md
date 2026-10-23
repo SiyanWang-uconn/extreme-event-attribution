@@ -1,6 +1,60 @@
 # Meeting Minutes
 
+**Date: 10/22/2026**  
+**Time: 9AM**  
 
+
+## 1. What We Discussed
+
+### Progress Updates
+
+- Checked WCRP project file and data source.
+- Read paciorek2018quantify and reproduce its simulation study.
+- Read a spatial-temporal paper `dell2025flexible` and presented it in class. 
+
+
+### Research Results / Materials Presented
+
+- 
+
+### Main Discussion Points
+
+- How to get data by using their py script and the use of ai.
+
+### Questions and Concerns
+
+- 
+
+
+## 2. What We Decided
+
+### Decisions
+
+- Get data ASAP.
+
+
+### Advisor’s Feedback and Recommendations
+
+- Know better about the use of Git command. 
+- Get data and be familiar with python script.
+
+
+### Changes to the Research Plan or Methods
+
+- 
+
+## 3. What to Do Next
+
+| Action Item | Responsible Person | Deadline | Status |
+|---|---|---|---|
+| get PNW heat extreme data  | Siyan  | ASAP |-ing |
+| target paper submission on 2027/03 | Siyan |  | gaining data |
+|  |  |  | |
+
+
+
+
+# 2026/10/15
 **Date: 10/15/2026**  
 **Time: 9AM**  
 
