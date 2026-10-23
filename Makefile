@@ -1,4 +1,4 @@
-.PHONY: bib main dell2025 git_bib git_meeting git_refer 
+.PHONY: bib main dell2025 git_bib git_meeting git_refer git_ignore git_make
 
 bib:
 	bibtex-tidy manuscript/reference.bib --sort year,author --modify
@@ -21,3 +21,11 @@ git_meeting:
 git_refer:
 	git add -- "references/$(file)"
 	git diff --cached --quiet || git commit -m "Add $(file)"
+
+git_ignore:
+	git add .gitignore
+	git commit -m "Update .gitignore"
+
+git_make:
+	git add Makefile
+	git commit -m "Update makefile"
