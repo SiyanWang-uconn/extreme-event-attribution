@@ -1,5 +1,65 @@
 # Meeting Minutes
 
+**Date: 10/28/2026**  
+**Time: 1:30PM**  
+
+
+## 1. What We Discussed
+
+### Progress Updates
+
+- Got PNW heatwave from ERA5, CPC and Berkeley Earth.
+- Produce RR and FAR on data, threshold chose as the 2021 tmax.
+- Produce anomaly return period vs. temperature smooth plot on 2021 like climate and 1951 climate 
+
+
+### Research Results / Materials Presented
+
+- 
+
+### Main Discussion Points
+
+- 
+
+### Questions and Concerns
+
+- What is the GMST anomaly table generated from? What is their standard?
+- Use transformation (eg. log) on FAR calculation?
+- To ensure the non-stationary approach usage, use test to see if the trend exists.
+
+
+## 2. What We Decided
+
+### Decisions
+
+- Read Smith's book chapter "Detection and Attribution of Extreme Weather Events: A Statistical Review" 
+carefully. Especially the example on PNW heatwaves. Consider if there is other things we can do.
+- Get Pakistan rainfall data
+
+### Advisor’s Feedback and Recommendations
+
+- **First approach:** Still Block maximum, consider Top3 tmax each year, which provide more data.
+- **Second approach:** POT approach. That comes a important question, for non-stationary data, how to determine the threshold for each year? And **Declustering** is needed here.
+- Keep on literature, especially the papers shared by advisor. And `Storyline`.
+
+
+### Changes to the Research Plan or Methods
+
+- 
+
+## 3. What to Do Next
+
+| Action Item | Responsible Person | Deadline | Status |
+|---|---|---|---|
+| Keep on PNW heatwave analysis  | Siyan  | ASAP |-ing |
+| Get Pakistan rainfall data | Siyan | this week | |
+| target paper submission on 2027/03 | Siyan | long term | gaining data |
+|  |  |  | |
+
+
+
+# 2026/10/22
+
 **Date: 10/22/2026**  
 **Time: 9AM**  
 
