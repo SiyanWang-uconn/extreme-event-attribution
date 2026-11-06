@@ -1,7 +1,7 @@
 .PHONY: bib main dell2025 git_bib git_meeting git_refer git_ignore git_make
 
 bib:
-	bibtex-tidy manuscript/reference.bib --sort year,author --modify
+	bibtex-tidy manuscript/reference.bib --sort=year,author --modify
 main:
 	latexmk -cd -pdf -outdir=build manuscript/main.tex
 	latexmk -cd -c -outdir=build manuscript/main.tex
