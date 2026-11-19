@@ -1,5 +1,65 @@
 # Meeting Minutes
 
+
+**Date: 11/12/2026**  
+**Time: 1:30PM**  
+
+
+## 1. What We Discussed
+
+### Progress Updates
+
+- POT approach first trial. Selected each year's data from May15 to Sept15 and only kept over 30C records,
+ use 0.9 quatile of this part of data. 0.9 quatile work as the threshold. 
+- Produce RR and FAR. The counterfactual choose still as 1951-like climate (use only GMST as the index)
+- Read the paper paciorek2018quantifying. It's a paper about analysis the RR and FAR when not account the event itself in 
+ fitting
+
+
+### Research Results / Materials Presented
+
+-  POT approach on PNW heatwave data (ERA5 and CPC)
+
+### Main Discussion Points
+
+- 
+
+### Questions and Concerns
+
+- 
+
+## 2. What We Decided
+
+### Decisions
+
+- Probabaly change the question to "Given the weather situation like this one, how much hotter did human influence make this ".
+
+### Advisor’s Feedback and Recommendations
+
+- The current POT approach might not be appropriate. The data includes in fitting is too few.
+ Should check Smith's methos in this book chapter, and reproduce it.
+
+
+### Changes to the Research Plan or Methods
+
+- Should organize a workflow for storing what has been done and what to do next in this
+ PNW heatwaves project.
+- Reproduce Smith's work. He includes MLE and Bayes approach in two methods, understand what he is doing.
+- Read Bader2019automated for checking if the choice of threshold appropriate.
+- How is the threshold good for nonstationary?
+
+
+## 3. What to Do Next
+
+| Action Item | Responsible Person | Deadline | Status |
+|---|---|---|---|
+| Reproduce Smith's work  | Siyan  | ASAP |-ing |
+| Change the question and explore on that | Siyan | this week | |
+| target paper submission on 2027/03 | Siyan | long term | gaining data |
+|  |  |  | |
+
+# 2026/10/28
+
 **Date: 10/28/2026**  
 **Time: 1:30PM**  
 
